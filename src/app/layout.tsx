@@ -12,7 +12,7 @@ const tajawal = Tajawal({
 
 export const metadata: Metadata = {
   title: {
-    default: "PR Agent | منصة خدمة العملاء الذكية وأتمتة المبيعات",
+    default: "PR Agent",
     template: "%s | PR Agent",
   },
   description:

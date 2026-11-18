@@ -19,8 +19,8 @@ import {
 } from 'lucide-react';
 
 export const metadata = {
-  title: 'PR Agent | Dark Luxury Cyber-Cinema Platform',
-  description: 'منصة الذكاء الاصطناعي الفاخرة لأتمتة مبيعات الشات والتجارة الاجتماعية بهندسة بصرية سيبرانية متقدمة.',
+  title: 'PR Agent',
+  description: 'منصة الذكاء الاصطناعي لأتمتة مبيعات الشات والتجارة الاجتماعية.',
 };
 
 export default function LandingPage() {
