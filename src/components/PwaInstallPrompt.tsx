@@ -42,8 +42,8 @@ export function PwaInstallPrompt() {
           <Download className="w-5 h-5 text-[#a78bfa]" />
         </div>
         <div className="flex-1">
-          <p className="text-white text-sm font-bold">تثبيت تطبيق CoachPRB</p>
-          <p className="text-gray-400 text-xs">سجّل أوزانك وتابع جدولك بدون متصفح</p>
+          <p className="text-white text-sm font-bold">تثبيت تطبيق PR Agent</p>
+          <p className="text-gray-400 text-xs">تابع المحادثات والأوردرات بدون متصفح</p>
         </div>
         <button
           onClick={handleInstall}

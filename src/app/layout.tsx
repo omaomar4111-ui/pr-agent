@@ -12,85 +12,79 @@ const tajawal = Tajawal({
 
 export const metadata: Metadata = {
   title: {
-    default: "CoachPRB — سجّل رقمك. غيّر جسمك",
-    template: "%s | CoachPRB",
+    default: "PR Agent | منصة خدمة العملاء الذكية وأتمتة المبيعات",
+    template: "%s | PR Agent",
   },
   description:
-    "CoachPRB: المنصة الاحترافية الأولى للمدربين والرياضيين في الشرق الأوسط. إدارة المتدربين، تصميم الخطط التدريبية والغذائية، وفحص التكنيك الرياضي وحماية المفاصل.",
-  applicationName: "CoachPRB",
+    "PR Agent: إيجنت ذكاء اصطناعي فاهم اللهجة المصرية والعربية للرد الفوري على تعليقات ورسائل إنستجرام وواتساب، واستخراج الأوردرات وتدقيق إيصالات إنستاباي.",
+  applicationName: "PR Agent",
   keywords: [
-    "CoachPRB",
-    "تدريب رياضي",
-    "كمال أجسام",
-    "كوتش أونلاين",
-    "دايت وجداول تمارين",
-    "Form Check",
-    "سجّل رقمك غيّر جسمك",
+    "PR Agent",
+    "خدمة عملاء ذكاء اصطناعي",
+    "أتمتة إنستجرام",
+    "بوت واتساب",
+    "فحص إنستاباي",
+    "تجارة إلكترونية مصر",
+    "Comment to DM"
   ],
-  authors: [{ name: "CoachPRB Team" }],
-  creator: "CoachPRB",
-  publisher: "CoachPRB",
-  metadataBase: new URL("https://coachprb.vercel.app"),
+  authors: [{ name: "PR Agent Team" }],
+  creator: "PR Agent",
+  publisher: "PR Agent",
+  metadataBase: new URL("https://pr-agent-ai.vercel.app"),
   openGraph: {
-    title: "CoachPRB — سجّل رقمك. غيّر جسمك",
+    title: "PR Agent | أتمتة مبيعات الشات وخدمة العملاء بالذكاء الاصطناعي",
     description:
-      "المنصة الاحترافية الأولى للمدربين والرياضيين. جداول تمارين، تغذية دقيقة، وحماية كاملة للمفاصل.",
-    url: "https://coachprb.vercel.app",
-    siteName: "CoachPRB",
+      "حوّل كل تعليق ورسالة لأوردر فوري مع أسطول إيجنتس ذكي وفحص إيصالات إنستاباي آلياً.",
+    url: "https://pr-agent-ai.vercel.app",
+    siteName: "PR Agent",
     locale: "ar_EG",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CoachPRB — سجّل رقمك. غيّر جسمك",
+    title: "PR Agent | أتمتة مبيعات الشات والتجارة الإلكترونية",
     description:
-      "المنصة الاحترافية الأولى للمدربين والرياضيين في مصر والشرق الأوسط.",
+      "المنصة الأولى لأتمتة خدمة عملاء التجارة الاجتماعية في مصر والشرق الأوسط.",
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/pr-logo.png",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "PR Agent",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e0918",
+  themeColor: "#0B0F17",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "PR Agent",
-    "url": "https://pr-agent-ai.vercel.app",
-    "logo": "https://pr-agent-ai.vercel.app/pr-logo.png",
-    "description": "منصة خدمة العملاء والتجارة الذكية بالذكاء الاصطناعي في الشرق الأوسط ومصر.",
-    "sameAs": [
-      "https://www.facebook.com",
-      "https://www.instagram.com"
-    ]
-  };
-
+}>) {
   return (
-    <html
-      lang="ar"
-      dir="rtl"
-      className={`${inter.variable} ${tajawal.variable}`}
-    >
+    <html lang="ar" dir="rtl" className={`${inter.variable} ${tajawal.variable} dark`}>
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="font-tajawal bg-[#0e0918] text-white antialiased">
+      <body className="bg-[#0B0F17] text-white font-sans antialiased min-h-screen">
         {children}
         <PwaInstallPrompt />
       </body>
