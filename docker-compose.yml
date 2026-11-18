@@ -1,83 +1,40 @@
-version: '3.8'
-
 services:
-  # Chatwoot (Unified Omnichannel Inbox & Support CRM)
-  chatwoot:
-    image: chatwoot/chatwoot:latest
-    restart: always
-    depends_on:
-      - postgres
-      - redis
+  # 1. PR Agent Web Frontend & API Gateway
+  pr-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pr-agent-app
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      - RAILS_ENV=production
-      - POSTGRES_HOST=postgres
-      - POSTGRES_USERNAME=postgres
-      - POSTGRES_PASSWORD=coachprb_secret
-      - POSTGRES_DATABASE=chatwoot_production
-      - REDIS_URL=redis://redis:6379
-      - FRONTEND_URL=http://localhost:3000
-    volumes:
-      - chatwoot_data:/app/storage
-
-  # Evolution API (WhatsApp Gateway for Coaches & Athletes)
-  evolution-api:
-    image: atendai/evolution-api:latest
-    restart: always
-    ports:
-      - "8080:8080"
-    environment:
-      - SERVER_URL=http://localhost:8080
-      - AUTHENTICATION_API_KEY=coachprb_evolution_key
-      - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://postgres:coachprb_secret@postgres:5432/evolution
-      - WEBHOOK_GLOBAL_ENABLED=true
-      - WEBHOOK_GLOBAL_URL=https://pr-agent-ai.vercel.app/api/webhooks/whatsapp
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - CHATWOOT_BASE_URL=http://chatwoot:3000
+    networks:
+      - pr-network
     depends_on:
-      - postgres
+      - redis
 
-  # Typebot (Visual Conversational Flows & Automated Triage)
-  typebot-builder:
-    image: baptistejammet/typebot-builder:latest
-    restart: always
-    ports:
-      - "3001:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:coachprb_secret@postgres:5432/typebot
-      - NEXTAUTH_URL=http://localhost:3001
-      - NEXT_PUBLIC_VIEWER_URL=http://localhost:3002
-      - ENCRYPTION_SECRET=coachprb_typebot_secret_key_32chars
-    depends_on:
-      - postgres
-
-  typebot-viewer:
-    image: baptistejammet/typebot-viewer:latest
-    restart: always
-    ports:
-      - "3002:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:coachprb_secret@postgres:5432/typebot
-      - ENCRYPTION_SECRET=coachprb_typebot_secret_key_32chars
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      - POSTGRES_PASSWORD=coachprb_secret
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
+  # 2. Redis Cache & Job Queue
   redis:
-    image: redis:alpine
-    restart: always
-    ports:
-      - "6379:6379"
+    image: redis:7-alpine
+    container_name: pr-agent-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - pr-network
+
+networks:
+  pr-network:
+    driver: bridge
 
 volumes:
-  chatwoot_data:
-  pg_data:
+  redis_data:
