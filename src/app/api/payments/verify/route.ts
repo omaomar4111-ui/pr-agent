@@ -16,17 +16,39 @@ export interface PaymentVerificationResult {
 
 export async function POST(req: NextRequest) {
   try {
+    const body = await req.json();
     const { 
       imageBase64, 
       mimeType = 'image/jpeg', 
       expectedAmount, 
       clientWalletPhone,
       orderId,
+      txId,
+      action,
       tenantSlug = 'demo-store'
-    } = await req.json();
+    } = body;
+
+    // Handle manual approval from dashboard
+    if (action === 'approve') {
+      if (orderId && supabaseAdmin) {
+        await supabaseAdmin
+          .from('orders')
+          .update({
+            payment_verified: true,
+            status: 'confirmed'
+          })
+          .eq('id', orderId);
+      }
+      return NextResponse.json({
+        success: true,
+        message: 'تم اعتماد التحويل وتأكيد الطلب بنجاح',
+        orderId,
+        txId
+      });
+    }
 
     if (!imageBase64) {
-      return NextResponse.json({ error: 'imageBase64 is required' }, { status: 400 });
+      return NextResponse.json({ error: 'imageBase64 or action is required' }, { status: 400 });
     }
 
     const apiKey = process.env.GEMINI_API_KEY || '';
