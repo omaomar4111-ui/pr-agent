@@ -1,22 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { motion } from "framer-motion";
 import { 
   CheckCircle2, 
   Clock, 
+  Truck, 
+  Package, 
   ArrowRight, 
   ArrowLeft, 
   CreditCard, 
-  Package, 
-  Truck, 
-  Sparkles,
   RefreshCw,
   Plus,
   Phone,
-  MapPin
+  MapPin,
+  Search,
+  Check
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { toast } from "@/components/ui/Toast";
 
 interface OrderCard {
   id: string;
@@ -30,7 +34,7 @@ interface OrderCard {
   createdAt: string;
 }
 
-export default function PipelinePage() {
+export default function PipelineKanbanPage() {
   const [orders, setOrders] = useState<OrderCard[]>([
     {
       id: "ord-101",
@@ -78,209 +82,125 @@ export default function PipelinePage() {
     }
   ]);
 
-  const [loading, setLoading] = useState(false);
+  const stages = [
+    { key: "new", label: "طلبات جديدة (مكتشفة)", color: "text-slate-300", bg: "bg-slate-500/10" },
+    { key: "pending_payment", label: "بانتظار الدفع (إنستاباي)", color: "text-amber-400", bg: "bg-amber-500/10" },
+    { key: "verified", label: "معتمد ومجهز للشحن", color: "text-purple-400", bg: "bg-purple-500/10" },
+    { key: "dispatched", label: "تم تسليمه لشركة الشحن", color: "text-emerald-400", bg: "bg-emerald-500/10" }
+  ] as const;
 
-  useEffect(() => {
-    async function loadOrders() {
-      try {
-        const res = await fetch("/api/orders");
-        const data = await res.json();
-        if (data.success && data.orders) {
-          setOrders(data.orders);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch live orders:", err);
-      }
-    }
-    loadOrders();
-  }, []);
-
-  const stages: { id: OrderCard["stage"]; label: string; icon: any; color: string }[] = [
-    { id: "new", label: "أوردرات جديدة (New)", icon: Clock, color: "text-indigo-400 border-indigo-500/20 bg-indigo-500/10" },
-    { id: "pending_payment", label: "بانتظار التحويل (Pending)", icon: CreditCard, color: "text-amber-400 border-amber-500/20 bg-amber-500/10" },
-    { id: "verified", label: "تم التحقق من الدفع (Verified)", icon: CheckCircle2, color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/10" },
-    { id: "dispatched", label: "جاهز / خرج للشحن (Dispatched)", icon: Truck, color: "text-purple-400 border-purple-500/20 bg-purple-500/10" }
-  ];
-
-  const moveOrder = async (orderId: string, direction: "prev" | "next") => {
-    const stageOrder: OrderCard["stage"][] = ["new", "pending_payment", "verified", "dispatched"];
-    const targetOrder = orders.find(o => o.id === orderId);
-    if (!targetOrder) return;
-
-    const currentIndex = stageOrder.indexOf(targetOrder.stage);
-    const nextIndex = direction === "next" 
-      ? Math.min(currentIndex + 1, stageOrder.length - 1)
-      : Math.max(currentIndex - 1, 0);
-
-    const newStage = stageOrder[nextIndex];
-    if (newStage === targetOrder.stage) return;
-
-    // Optimistic UI Update
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, stage: newStage } : o));
-
-    // Sync with backend API
-    try {
-      await fetch("/api/orders", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, stage: newStage })
-      });
-    } catch (err) {
-      console.warn("Order sync error:", err);
-    }
+  const moveOrder = (id: string, nextStage: "new" | "pending_payment" | "verified" | "dispatched") => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, stage: nextStage } : o))
+    );
+    toast("success", `تم نقل الطلب ${id} إلى المرحلة التالية`);
   };
 
-  const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-
   return (
-    <div dir="rtl" className="min-h-screen bg-[#07040D] text-white font-sans selection:bg-indigo-600 pb-16">
-      {/* Top Header */}
-      <header className="border-b border-white/10 px-6 py-4 max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Logo size="sm" />
-          <span className="text-gray-500 font-mono">/</span>
-          <h1 className="text-sm font-semibold text-gray-200">إدارة مراحل الطلبات والمبيعات (Pipeline CRM)</h1>
+    <div className="min-h-screen bg-[#07040D] text-white p-6 md:p-10 font-sans selection:bg-purple-600 selection:text-white" dir="rtl">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-8 border-b border-white/5">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">مسار خط الطلبات (Order Pipeline)</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-mono">
+              Smart Kanban
+            </span>
+          </div>
+          <p className="text-sm text-slate-400 mt-1">
+            متابعة مراحل كل أوردر من المحادثة الأولى وحتى استلام شركة الشحن.
+          </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link href="/inbox" className="text-xs text-gray-300 hover:text-white transition">صندوق المحادثات</Link>
-          <Link href="/fleet" className="text-xs text-gray-300 hover:text-white transition">أسطول الإيجنتس</Link>
-          <Link href="/settings" className="bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs px-4 py-2 rounded-xl transition">
-            الإعدادات
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard">
+            <Button variant="secondary" size="md">
+              <ArrowRight size={14} /> لوحة التحكم
+            </Button>
           </Link>
         </div>
-      </header>
+      </div>
 
-      {/* Stats Bar */}
-      <main className="max-w-7xl mx-auto px-6 pt-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-400">إجمالي الأوردرات النشطة</span>
-              <h3 className="text-2xl font-bold mt-1">{orders.length} أوردر</h3>
-            </div>
-            <Package className="w-8 h-8 text-indigo-400 opacity-80" />
-          </div>
+      {/* Kanban Board Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-8 items-start">
+        {stages.map((stage) => {
+          const stageOrders = orders.filter((o) => o.stage === stage.key);
+          return (
+            <div
+              key={stage.key}
+              className="rounded-2xl bg-white/[0.02] border border-white/5 p-4 flex flex-col min-h-[500px]"
+            >
+              {/* Column Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-4">
+                <span className={`text-xs font-bold ${stage.color}`}>{stage.label}</span>
+                <span className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] font-mono text-slate-400">
+                  {stageOrders.length}
+                </span>
+              </div>
 
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-400">قيمة المبيعات الإجمالية</span>
-              <h3 className="text-2xl font-bold mt-1 text-emerald-400">{totalRevenue.toLocaleString('ar-EG')} ج.م</h3>
-            </div>
-            <CreditCard className="w-8 h-8 text-emerald-400 opacity-80" />
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-400">أوردرات مدققة بـ Vision AI</span>
-              <h3 className="text-2xl font-bold mt-1 text-purple-400">
-                {orders.filter(o => o.stage === "verified" || o.stage === "dispatched").length} مدققة 100%
-              </h3>
-            </div>
-            <CheckCircle2 className="w-8 h-8 text-purple-400 opacity-80" />
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-gray-400">حالة الربط مع Supabase</span>
-              <h3 className="text-sm font-bold mt-1 text-emerald-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Active & Synced</span>
-              </h3>
-            </div>
-            <Sparkles className="w-8 h-8 text-amber-400 opacity-80" />
-          </div>
-        </div>
-
-        {/* Kanban Board Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {stages.map(st => {
-            const Icon = st.icon;
-            const stageOrders = orders.filter(o => o.stage === st.id);
-
-            return (
-              <div key={st.id} className="flex flex-col rounded-2xl bg-black/40 border border-white/10 p-4 min-h-[500px]">
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg border ${st.color}`}>
-                      <Icon size={16} />
-                    </div>
-                    <span className="text-xs font-bold text-gray-200">{st.label.split("(")[0]}</span>
+              {/* Order Cards */}
+              <div className="space-y-3 flex-1">
+                {stageOrders.length === 0 ? (
+                  <div className="h-32 flex items-center justify-center text-[11px] text-slate-500 border border-dashed border-white/5 rounded-xl">
+                    لا توجد طلبات هنا
                   </div>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-mono">
-                    {stageOrders.length}
-                  </span>
-                </div>
-
-                {/* Orders Stack */}
-                <div className="space-y-3 flex-1 overflow-y-auto">
-                  {stageOrders.map(order => (
-                    <div
+                ) : (
+                  stageOrders.map((order) => (
+                    <motion.div
                       key={order.id}
-                      className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-indigo-500/50 transition-all space-y-3 group"
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      className="p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-purple-500/30 transition shadow-lg space-y-2"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">{order.customer}</span>
-                        <span className="text-[10px] text-gray-400 font-mono">{order.createdAt}</span>
+                        <span className="font-mono text-xs font-bold text-purple-400">{order.id}</span>
+                        <span className="text-[10px] text-slate-500">{order.createdAt}</span>
                       </div>
 
-                      <div className="space-y-1 text-xs text-gray-300">
-                        <div className="flex items-center gap-1.5 text-gray-400">
-                          <Phone size={12} />
-                          <span className="font-mono text-[11px]">{order.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-gray-400">
-                          <MapPin size={12} />
-                          <span className="text-[11px]">{order.city}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-gray-200 pt-1 font-medium">
-                          <Package size={12} className="text-indigo-400 shrink-0" />
-                          <span className="truncate">{order.items}</span>
-                        </div>
-                      </div>
+                      <div className="font-bold text-xs text-slate-100">{order.customer}</div>
+                      <p className="text-[11px] text-slate-300">{order.items}</p>
 
-                      <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-400 font-mono">{order.total} ج.م</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300">
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                        <span className="font-mono font-bold text-emerald-400">{order.total} ج.م</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400 font-mono">
                           {order.paymentMethod}
                         </span>
                       </div>
 
-                      {/* Stage Shift Controls */}
-                      <div className="flex items-center justify-between pt-1">
-                        <button
-                          onClick={() => moveOrder(order.id, "prev")}
-                          disabled={st.id === "new"}
-                          className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white disabled:opacity-20 transition"
-                          title="رجوع للمرحلة السابقة"
-                        >
-                          <ArrowRight size={14} />
-                        </button>
-                        <span className="text-[10px] text-gray-500">نقل المرحلة</span>
-                        <button
-                          onClick={() => moveOrder(order.id, "next")}
-                          disabled={st.id === "dispatched"}
-                          className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white disabled:opacity-20 transition"
-                          title="تقدم للمرحلة التالية"
-                        >
-                          <ArrowLeft size={14} />
-                        </button>
+                      {/* Action buttons */}
+                      <div className="pt-2 flex items-center justify-end gap-1">
+                        {stage.key === "new" && (
+                          <button
+                            onClick={() => moveOrder(order.id, "pending_payment")}
+                            className="text-[10px] px-2 py-1 bg-amber-500/20 text-amber-300 rounded hover:bg-amber-500/30"
+                          >
+                            طلب تحويل ←
+                          </button>
+                        )}
+                        {stage.key === "pending_payment" && (
+                          <button
+                            onClick={() => moveOrder(order.id, "verified")}
+                            className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-300 rounded hover:bg-purple-500/30"
+                          >
+                            اعتماد الإيصال ←
+                          </button>
+                        )}
+                        {stage.key === "verified" && (
+                          <button
+                            onClick={() => moveOrder(order.id, "dispatched")}
+                            className="text-[10px] px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded hover:bg-emerald-500/30"
+                          >
+                            تصدير للشحن ←
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  ))}
-
-                  {stageOrders.length === 0 && (
-                    <div className="h-32 border border-dashed border-white/10 rounded-xl flex items-center justify-center text-xs text-gray-600">
-                      لا توجد أوردرات هنا
-                    </div>
-                  )}
-                </div>
+                    </motion.div>
+                  ))
+                )}
               </div>
-            );
-          })}
-        </div>
-      </main>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
