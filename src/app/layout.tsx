@@ -4,6 +4,7 @@ import "./globals.css";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { AppNavigation } from "@/components/AppNavigation";
 import { ToastContainer } from "@/components/ui/Toast";
+import { CommandPalette } from "@/components/CommandPalette";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const tajawal = Tajawal({
@@ -91,6 +92,7 @@ export default function RootLayout({
         {children}
         <PwaInstallPrompt />
         <ToastContainer />
+        <CommandPalette />
       </body>
     </html>
   );
