@@ -27,6 +27,7 @@ import {
   Truck,
   Code2
 } from "lucide-react";
+import { InteractivePhoneTour } from "@/components/InteractivePhoneTour";
 
 export default function LandingPage() {
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<"inquiry" | "product" | "order">("inquiry");
@@ -163,106 +164,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3. Interactive Workflow (Exact Replyse Component: "من أول سؤال، لطلب اتسجّل") */}
+      {/* 3. Interactive Phone Simulation Tour (Replyse & Intercom Master Level) */}
       <section id="interactive-demo" className="max-w-7xl mx-auto px-6 py-20 border-t border-white/10">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-bold text-purple-400 uppercase tracking-wider block mb-2">✦ رحلة العميل خطوة بخطوة</span>
-          <h2 className="text-3xl lg:text-4xl font-bold">من أول سؤال، لطلب اتسجّل</h2>
-          <p className="text-gray-400 text-sm mt-3">شاهد المحاكاة الحية لكيف يتعامل PR Agent مع زبائنك لحظة بلحظة</p>
-        </div>
-
-        {/* Workflow Component Box */}
-        <div className="rounded-3xl bg-[#120F1D] border border-purple-500/20 shadow-2xl overflow-hidden">
-          {/* Top Bar with Step Switcher */}
-          <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-4 bg-black/40">
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span>محادثة حقيقية · بيانات العميل مشفرة</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {[
-                { id: "inquiry", label: "1. الاستفسار" },
-                { id: "product", label: "2. اختيار المنتج" },
-                { id: "order", label: "3. تسجيل الطلب والدفع" }
-              ].map(step => (
-                <button
-                  key={step.id}
-                  onClick={() => setActiveWorkflowStep(step.id as any)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    activeWorkflowStep === step.id
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
-                      : "bg-white/5 text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {step.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Workflow Body */}
-          <div className="p-8 grid lg:grid-cols-12 gap-8 items-center min-h-[380px]">
-            <div className="lg:col-span-4 space-y-4 border-l border-white/10 pl-6">
-              <span className="text-xs font-bold text-purple-400">قناة المحادثة</span>
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold">
-                  ع
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white">عميل إنستجرام / واتساب</h4>
-                  <span className="text-[11px] text-gray-400">Facebook Messenger & IG Direct</span>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 leading-relaxed font-light">
-                من أول سؤال عن السعر والمقاس وحتى تدقيق إيصال إنستاباي وتسجيل بوليصة الشحن، كل شيء يمر آلياً دون تشتت.
-              </p>
-            </div>
-
-            <div className="lg:col-span-8 space-y-4">
-              {activeWorkflowStep === "inquiry" && (
-                <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-right text-sm">
-                    <p className="text-gray-200">بكام الهودي الأسود يا فندم ومصاريف الشحن كام؟</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-purple-600/20 border border-purple-500/30 text-right text-sm space-y-2">
-                    <span className="text-xs text-purple-300 font-bold flex items-center gap-1">
-                      <Bot size={14} /> رد PR Agent الفوري:
-                    </span>
-                    <p className="text-gray-100">الهودي الأسود الأوفر سايز بـ 650 ج.م ومتاح بجميع المقاسات (M, L, XL, 2XL)، والتوصيل متاح لجميع المحافظات خلال 24 لـ 48 ساعة 🚚. تحب تشوف جدول المقاسات بالسم؟</p>
-                  </div>
-                </div>
-              )}
-
-              {activeWorkflowStep === "product" && (
-                <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-right text-sm">
-                    <p className="text-gray-200">أنا طولي 178 ووزني 75، آخد مقاس إيه؟</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-purple-600/20 border border-purple-500/30 text-right text-sm space-y-2">
-                    <span className="text-xs text-purple-300 font-bold flex items-center gap-1">
-                      <Bot size={14} /> اقتراح المقاس بالذكاء الاصطناعي:
-                    </span>
-                    <p className="text-gray-100">أنسب مقاس لحضرتك هو L هيديك ستايل أوفر سايز مريح جداً ومظبوط على الأكتاف. تحب أحجزلك قطعتين وتستفيد بخصم الشحن المجاني؟</p>
-                  </div>
-                </div>
-              )}
-
-              {activeWorkflowStep === "order" && (
-                <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-right text-sm">
-                    <p className="text-gray-200">تمام احجزلي قطعتين L الاسم: كريم ممدوح، 01012345678، المعادي شارع النصر عمارة 42. وحولت على إنستاباي.</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-right text-sm space-y-2">
-                    <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
-                      <CheckCircle2 size={14} /> فحص الإيصال واعتماد الأوردر (Vision OCR):
-                    </span>
-                    <p className="text-gray-100">تم التحقق من تحويل 1,300 ج.م على إنستاباي بنجاح برقم عملية مرجعي صحيح! الأوردر جاهز للتسليم لشركة الشحن فوراً ✓</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <InteractivePhoneTour />
       </section>
 
       {/* 4. AI Training Simulator (مُحاكي تعليم المنتجات والكتالوج) */}

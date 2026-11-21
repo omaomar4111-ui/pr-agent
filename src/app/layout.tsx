@@ -3,6 +3,7 @@ import { Inter, Tajawal } from "next/font/google";
 import "./globals.css";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { AppNavigation } from "@/components/AppNavigation";
+import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { ToastContainer } from "@/components/ui/Toast";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -87,9 +88,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="bg-[#0B0F17] text-white font-sans antialiased min-h-screen">
+      <body className="bg-[#0B0F17] text-white font-sans antialiased min-h-screen pb-16 md:pb-0">
         <AppNavigation />
         {children}
+        <MobileBottomBar />
         <PwaInstallPrompt />
         <ToastContainer />
         <CommandPalette />
