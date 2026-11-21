@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { toast } from "@/components/ui/Toast";
+import { soundFX } from "@/lib/soundFX";
 
 interface OrderCard {
   id: string;
@@ -93,6 +94,7 @@ export default function PipelineKanbanPage() {
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, stage: nextStage } : o))
     );
+    soundFX.playSuccess();
     toast("success", `تم نقل الطلب ${id} إلى المرحلة التالية`);
   };
 

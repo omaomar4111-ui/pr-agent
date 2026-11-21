@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { toast } from "@/components/ui/Toast";
+import { soundFX } from "@/lib/soundFX";
 
 interface ConversationItem {
   id: string;
@@ -172,6 +173,7 @@ export default function OmnichannelInboxPage() {
     }));
     setInputText("");
     setIsSending(true);
+    soundFX.playSend();
 
     // Simulate AI Copilot analysis
     setTimeout(() => {
@@ -191,6 +193,7 @@ export default function OmnichannelInboxPage() {
           ...prev,
           [activeConvId]: [...(prev[activeConvId] || []), botReply]
         }));
+        soundFX.playSuccess();
         toast("success", "تمت المعالجة وتحديث حالة الطلب عبر الـ AI");
       }, 1200);
     }, 600);
