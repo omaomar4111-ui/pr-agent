@@ -18,108 +18,118 @@ import {
   Lock,
   Flame,
   Building2,
-  Store
+  Store,
+  Coins,
+  Cpu,
+  Layers,
+  Sliders
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { NumberTicker } from "@/components/NumberTicker";
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
-  const [conversationsPerMonth, setConversationsPerMonth] = useState(2500);
+  const [selectedContacts, setSelectedContacts] = useState(2500);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // ROI Calculator
-  const estimatedSavedHours = Math.round((conversationsPerMonth * 3) / 60); // 3 mins per human chat
-  const estimatedSavedCost = Math.round(estimatedSavedHours * 50); // 50 EGP/hr human employee rate
-  const subscriptionCost = billingPeriod === "monthly" ? 790 : 632;
-  const netProfit = Math.max(0, estimatedSavedCost - subscriptionCost);
+  // Dynamic Contact/Credit calculation based on slider
+  const getDynamicPlanPrice = (contacts: number) => {
+    if (contacts <= 1000) return { monthly: 390, yearly: 312, label: "باقة Starter" };
+    if (contacts <= 3000) return { monthly: 690, yearly: 552, label: "باقة Growth AI" };
+    if (contacts <= 7500) return { monthly: 1190, yearly: 952, label: "باقة Scale AI" };
+    return { monthly: 1990, yearly: 1592, label: "باقة Enterprise AI" };
+  };
 
-  // Highly competitive pricing designed to dominate Replyse & ManyChat in the Egyptian & Arab market
+  const dynamicPricing = getDynamicPlanPrice(selectedContacts);
+  const currentPrice = billingPeriod === "monthly" ? dynamicPricing.monthly : dynamicPricing.yearly;
+
+  // ManyChat Comparison Anchor:
+  // ManyChat 2,500 contacts = $39 (~1,950 EGP) without InstaPay OCR, without Egyptian Dialect, without Bosta AWB.
+  // PR Agent 2,500 contacts = 690 EGP WITH all Arabic AI features!
+
   const plans = [
     {
-      id: "starter",
-      name: "باقة الانطلاق (Starter)",
-      badge: "أرخص من راتب موظف بيومين",
-      priceMonthly: 390,
-      priceYearly: 312,
-      desc: "مثالية للمشاريع الناشئة وصفحات الإنستجرام والواتساب التي تبحث عن رد آلي سريع وموثوق.",
+      id: "free_trial",
+      name: "تجربة الـ 3 أيام المجانية",
+      badge: "بدون فيزا نهائياً",
+      price: 0,
+      period: "3 أيام مجاناً",
+      contactsLimit: "100 جهة اتصال / محادثة",
+      creditsIncluded: "500 رصيد AI مجاني",
+      desc: "افتح كل إمكانيات المنصة فحص إنستاباي، والردود الذكية وتأهيل العقارات لمدة 3 أيام لتتأكد من النتائج.",
       features: [
-        "إيجنت ذكاء اصطناعي فاهم اللهجة المصرية والعربية",
-        "رد آلي فوري على رسائل الواتساب و إنستجرام DM",
-        "تحويل الكومنتات لرسائل خاصة (Comment-to-DM)",
-        "كتالوج منتجات ذكي حتى 250 منتج/عقار",
-        "لوحة كانبان CRM لمتابعة حالات الطلبات",
-        "درع حماية ضد الحظر (Anti-Ban Guard)",
-        "تجربة مجانية كاملة لمدة 3 أيام بدون فيزا"
+        "100 عميل نشط (Active Contacts)",
+        "500 كريديت AI للردود الفورية الذكية",
+        "فحص إيصالات إنستاباي بالرؤية الجنائية (Vision AI)",
+        "ربط واتساب فوري عبر رمز QR",
+        "تأهيل عملاء العقارات وليدز الملابس",
+        "درع حماية كاملة ضد الحظر (Anti-Ban Guard)"
       ],
       popular: false,
-      trialBanner: "🎁 تجربة مجانية 3 أيام متاحة",
-      ctaText: "ابدأ تجربة الـ 3 أيام مجاناً"
+      ctaText: "ابدأ الـ 3 أيام مجاناً",
+      isFree: true
     },
     {
       id: "growth",
-      name: "باقة النمو الذكي (Growth AI)",
-      badge: "الأكثر طلباً للتجار والشركات",
-      priceMonthly: 790,
-      priceYearly: 632,
-      desc: "الحل الشامل للمتاجر وشركات العقارات: فحص إيصالات إنستاباي، والعميل الاستباقي، وربط الشحن.",
+      name: "باقة النمو (Growth AI)",
+      badge: "أرخص من ManyChat بـ 65%",
+      priceMonthly: 690,
+      priceYearly: 552,
+      contactsLimit: "حتى 3,000 عميل نشط / شهر",
+      creditsIncluded: "15,000 كريديت ردود ذكية شهرياً",
+      desc: "الباقة الأكثر مبيعاً للمتاجر وشركات العقارات: تشمل فحص إنستاباي، السلات المهجورة، وبوالص الشحن.",
       features: [
-        "كل ميزات باقة Starter",
-        "فحص إيصالات إنستاباي الجنائي بالرؤية (Vision AI OCR)",
-        "العميل الاستباقي (Proactive AI) لاسترجاع السلات المهجورة",
+        "3,000 عميل نشط شهرياً (غير محدود الرسائل لنفس العميل)",
+        "15,000 كريديت AI توليدي فاهم اللهجة المصرية والعربية",
+        "فحص إيصالات إنستاباي بالرؤية الجنائية غير المحدود",
+        "العميل الاستباقي (Proactive) لاسترجاع السلات المهجورة",
         "متابعة إيصالات إنستاباي المعلقة بعد 60 دقيقة آلياً",
-        "تأهيل عملاء العقارات والليدز (Real Estate Qualifier)",
+        "تأهيل عملاء العقارات وليدز الفيلات والشقق",
         "إصدار بوالص الشحن التلقائية (بوسطة وأوتو وأرامكس)",
-        "كتالوج ومنتجات غير محدودة",
-        "أولوية معالجة في ثوانٍ معدودة عبر عتاد سحابي فائق"
+        "تكلفة الكريديت الزائد: 0.05 ج.م فقط (الأرخص إطلاقاً)"
       ],
       popular: true,
-      trialBanner: "⚡ تشمل كل ميزات الـ AI لمدة 3 أيام مجاناً",
-      ctaText: "جرّب باقة النمو 3 أيام مجاناً"
+      ctaText: "اشترك في باقة النمو (تجربة 3 أيام مشمولة)"
     },
     {
-      id: "enterprise",
-      name: "باقة الشركات والتوكيلات (Enterprise)",
-      badge: "للمؤسسات والبراندات الكبرى",
-      priceMonthly: 1650,
-      priceYearly: 1320,
-      desc: "حل غير محدود للشركات الكبرى، التوكيلات، والمطورين العقاريين بحجم محادثات ضخم.",
+      id: "scale",
+      name: "باقة التوسع والشركات (Scale & High Volume)",
+      badge: "للبراندات والمطورين العقاريين",
+      priceMonthly: 1450,
+      priceYearly: 1160,
+      contactsLimit: "حتى 10,000 عميل نشط / شهر",
+      creditsIncluded: "60,000 كريديت ردود ذكية شهرياً",
+      desc: "للشركات ذات الضغط العالي والتوكيلات العقارية الضخمة التي تبحث عن أقصى سرعة وأعلى سعة محادثات.",
       features: [
-        "كل ميزات باقة Growth AI بالكامل",
-        "عدد غير محدود من قنوات الواتساب وإنستجرام وفيسبوك",
-        "ربط مخصص مع أنظمة الـ ERP والـ CRM ومخازن الشركات",
-        "مدير حساب تقني مخصص مع خط دعم طوارئ 24/7",
-        "تدريب مخصص للنموذج على وثائق ونبرة شركتك الداخلية",
-        "اتفاقية مستوى الخدمة SLA 99.9% مع سرية بيانات مصرفية",
-        "عزل كامل للبيانات بقاعدة بيانات مخصصة (Dedicated DB)"
+        "10,000 عميل نشط شهرياً مع إمكانية التوسع المرن",
+        "60,000 كريديت AI متقدم لمعالجة الاستفسارات المعقدة",
+        "تكامل مخصص مع أنظمة الـ ERP والـ CRM ومستودعات الشركات",
+        "ربط متعدد لقنوات الواتساب وإنستجرام وفيسبوك",
+        "مدير حساب تقني مخصص مع خط طوارئ 24/7",
+        "خوادم فائقة السرعة مع أولوية معالجة بنسبة 99.9% SLA",
+        "عزل كامل للبيانات بقاعدة بيانات مخصصة"
       ],
       popular: false,
-      trialBanner: "🏢 استشارة وتجربة عملية مع فريق المهندسين",
-      ctaText: "تواصل مع مستشار الأنظمة"
+      ctaText: "ابدأ باقة التوسع (تجربة 3 أيام مشمولة)"
     }
   ];
 
   const faqs = [
     {
-      q: "كيف تعمل التجربة المجانية لمدة 3 أيام؟",
-      a: "بمجرد تسجيل الدخول وربط رقم الواتساب أو متجرك، تُفتح لك كافة ميزات المنصة بالكامل (بما فيها Vision AI لفحص إنستاباي والـ Proactive Agent) لمدة 3 أيام مجاناً 100% بدون إدخال أي بطاقة بنكية."
+      q: "ما معنى 'العميل النشط' (Active Contact) والكريديت؟",
+      a: "مثل نظام ManyChat تماماً: العميل النشط هو أي شخص يراسلك أو يكتب تعليقاً خلال الشهر، ومهما تبادلتم من رسائل طوال الشهر يُحسب كعميل واحد فقط! أما الكريديت (Credits) فيُستخدم فقط عندما يقوم الذكاء الاصطناعي بتوليد رد جديد أو فحص إيصال إنستاباي بالرؤية."
     },
     {
-      q: "هل الأسعار منافسة مقارنة بالمنصات الأخرى؟",
-      a: "نعم وبفارق هائل! باقة الـ Starter بـ 390 ج.م فقط وباقة الـ Growth الشاملة بـ 790 ج.م فقط، في حين تبدأ المنصات العالمية مثل ManyChat و Intercom من 25$ إلى 60$ شهرياً (أكثر من 1,500 - 3,000 ج.م) وبدون دعم فحص إنستاباي أو فهم العامية المصرية."
+      q: "كيف تنافس أسعار PR Agent منصة ManyChat؟",
+      a: "في ManyChat، باقة الـ 2,500 عميل تكلف 39$ شهرياً (حوالي 1,950 ج.م) وبدون فهم للهجة المصرية وبدون فحص إنستاباي وبدون ربط بوسطة. بينما في PR Agent تحصل على 3,000 عميل نشط بـ 690 ج.م فقط شاملة كافة ميزات الذكاء الاصطناعي الجنائي وبوالص الشحن (توفير أكثر من 65%)!"
     },
     {
-      q: "هل أحتاج لفيزا أو كارت بنكي لبدء التجربة المجانية؟",
-      a: "نهائياً! التجربة مجانية تماماً وبدون أي التزام مالي. سجل برقم هاتفك أو إيميلك وابدأ العمل في دقيقتين."
+      q: "ماذا يحدث إذا استهلكت كل رصيد الكريديت أو العملاء؟",
+      a: "السيستم لا يتوقف إطلاقاً! يمكنك شحن رصيد كريديت إضافي في أي وقت بأسعار رمزية (50 ج.م لكل 1,000 كريديت إضافي)، أو ترقية الشريحة بسلاسة من لوحة التحكم."
     },
     {
-      q: "هل النظام يدعم شركات العقارات (Real Estate)؟",
-      a: "نعم، النظام يتضمن نموذج تأهيل عقاري متخصص يسأل العميل عن الميزانية والموقع ونوع الوحدة ونظام السداد، ويرسل البروشورات ويحوّل الليد المؤهل فوراً لمسؤول المبيعات."
-    },
-    {
-      q: "ماذا يحدث بعد انتهاء الـ 3 أيام تجربة؟",
-      a: "ستتمكن من اختيار الباقة الأنسب لمبيعاتك ومتابعة نشاطك عبر الدفع بإنستاباي أو فودافون كاش أو البطاقات البنكية دون فقدان أي محادثات أو طلبات مسجلة."
+      q: "كيف أحصل على التجربة المجانية لمدة 3 أيام؟",
+      a: "بمجرد التسجيل برقم هاتفك أو إيميلك، يُشحن حسابك فوراً برصيد 500 كريديت و100 عميل نشط لمدة 3 أيام مجاناً 100% دون الحاجة لإدخال أي بطاقة بنكية."
     }
   ];
 
@@ -137,13 +147,13 @@ export default function PricingPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm text-white">تجربة مجانية شاملة لمدة 3 أيام</span>
+                <span className="font-extrabold text-sm text-white">تجربة مجانية كاملة لمدة 3 أيام</span>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
-                  بدون فيزا أو بطاقة بنكية
+                  شاملة 500 كريديت AI وبدون فيزا
                 </span>
               </div>
               <p className="text-xs text-gray-300 mt-0.5">
-                جرّب إيجنت المبيعات وفحص إنستاباي التلقائي وبوالص الشحن على متجرك الحقيقي وتأكد من النتائج بنفسك.
+                افتح كل ميزات فحص إنستاباي والردود الذكية وتأهيل ليدز العقارات مجاناً بالكامل.
               </p>
             </div>
           </div>
@@ -151,25 +161,25 @@ export default function PricingPage() {
             href="/onboarding"
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-black font-extrabold text-xs transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-1.5 shrink-0"
           >
-            <span>ابدأ الـ 3 أيام الآن</span>
+            <span>تفعيل الـ 3 أيام مجاناً</span>
             <ArrowRight size={14} className="rotate-180" />
           </Link>
         </div>
       </div>
 
       {/* Header */}
-      <div className="relative z-10 max-w-4xl mx-auto text-center space-y-4 mb-14">
+      <div className="relative z-10 max-w-4xl mx-auto text-center space-y-4 mb-12">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-mono text-purple-300">
-          <Sparkles size={14} className="text-purple-400" />
-          <span>أقوى ميزات بأفضل سعر تنافسي في مصر والشرق الأوسط</span>
+          <Coins size={14} className="text-emerald-400" />
+          <span>نظام باقات وكريديت عادل ومرن • ادفع فقط مقابل ما تستهلكه</span>
         </div>
 
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-          خطط أسعار مصممة لتسبق جميع منافسيك
+          باقات ذكية تنافس ManyChat بمميزات حصرية
         </h1>
 
         <p className="text-sm md:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          وفّر أكثر من 80% من تكاليف خدمة العملاء والمرتبات، وضاعف سرعة إتمام الأوردرات وحجز المبيعات في ثوانٍ معدودة.
+          نفس نظام جهات الاتصال النشطة (Active Contacts) والكريديت المعتمد عالمياً، لكن بنصف التكلفة وبدعم كامل للهجة المصرية وفحص إنستاباي الجنائي وبوالص الشحن.
         </p>
 
         {/* Billing Switcher */}
@@ -191,9 +201,64 @@ export default function PricingPage() {
             >
               <span>دفع سنوي</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">
-                خصم 20% إضافي
+                خصم 20% (شهرين مجاناً)
               </span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Contact & Credit Calculator (ManyChat Style Slider) */}
+      <div className="relative z-10 max-w-4xl mx-auto mb-16 p-6 rounded-3xl bg-[#110c22]/90 border border-purple-500/30 backdrop-blur-xl shadow-2xl">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2.5">
+            <Sliders size={18} className="text-emerald-400" />
+            <h3 className="text-base font-bold text-white">حاسبة حجم العملاء والكريديت المخصص</h3>
+          </div>
+          <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">
+            {dynamicPricing.label}
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-baseline text-xs">
+            <span className="text-gray-400">عدد العملاء النشطين شهرياً (Active Contacts):</span>
+            <span className="text-xl font-black font-mono text-emerald-400">
+              {selectedContacts.toLocaleString()} عميل نشط
+            </span>
+          </div>
+
+          <input
+            type="range"
+            min="500"
+            max="15000"
+            step="500"
+            value={selectedContacts}
+            onChange={(e) => setSelectedContacts(Number(e.target.value))}
+            className="w-full accent-emerald-400 h-2 bg-white/10 rounded-lg cursor-pointer"
+          />
+
+          <div className="flex justify-between text-[10px] text-gray-500 font-mono">
+            <span>500 عميل</span>
+            <span>3,000 عميل</span>
+            <span>7,500 عميل</span>
+            <span>15,000+ عميل</span>
+          </div>
+
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-4 border-t border-white/5 text-xs text-gray-300">
+            <div className="flex items-center gap-2">
+              <Coins size={14} className="text-purple-400" />
+              <span>الرصيد التوليدي المقدر: <strong className="text-white font-mono">{Math.round(selectedContacts * 5).toLocaleString()} كريديت AI</strong></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">السعر المقدر:</span>
+              <span className="text-lg font-black font-mono text-white">
+                {currentPrice} ج.م / شهر
+              </span>
+              <span className="text-[10px] text-gray-400 font-mono">
+                (مقارنة بـ {selectedContacts >= 2500 ? "1,950+ ج.م في ManyChat" : "850+ ج.م"})
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -201,7 +266,8 @@ export default function PricingPage() {
       {/* Pricing Cards Grid */}
       <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
         {plans.map((plan) => {
-          const price = billingPeriod === "monthly" ? plan.priceMonthly : plan.priceYearly;
+          const price = plan.isFree ? 0 : (billingPeriod === "monthly" ? plan.priceMonthly : plan.priceYearly);
+          
           return (
             <Card
               key={plan.id}
@@ -214,7 +280,7 @@ export default function PricingPage() {
             >
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-[11px] font-extrabold text-black shadow-lg flex items-center gap-1">
-                  <Flame size={13} /> الأكثر توفيراً وطلباً للمتاجر
+                  <Flame size={13} /> الباقة الأكثر مبيعاً والأعلى توفيراً
                 </div>
               )}
 
@@ -231,21 +297,18 @@ export default function PricingPage() {
                 <div className="my-5 pb-5 border-b border-white/5">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-emerald-300 tracking-tight">
-                      {price.toLocaleString("ar-EG")}
+                      {plan.isFree ? "0" : price?.toLocaleString("ar-EG")}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">ج.م / شهرياً</span>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {plan.isFree ? "ج.م (مجاناً)" : "ج.م / شهرياً"}
+                    </span>
                   </div>
-                  {billingPeriod === "yearly" ? (
-                    <div className="text-[11px] text-emerald-400 mt-1 font-medium">يُدفع سنوياً مع توفير شهرين مجاناً</div>
-                  ) : (
-                    <div className="text-[11px] text-purple-300 mt-1 font-mono">3 أيام تجربة مجانية مشمولة بالكامل</div>
-                  )}
-                </div>
-
-                {/* Trial Pill on Card */}
-                <div className="mb-5 p-2 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-emerald-300 flex items-center gap-2">
-                  <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
-                  <span>{plan.trialBanner}</span>
+                  <div className="text-[11px] text-emerald-400 mt-1 font-mono font-medium">
+                    {plan.contactsLimit}
+                  </div>
+                  <div className="text-[10px] text-purple-300 font-mono mt-0.5">
+                    ⚡ {plan.creditsIncluded}
+                  </div>
                 </div>
 
                 {/* Features List */}
@@ -277,72 +340,42 @@ export default function PricingPage() {
         })}
       </div>
 
-      {/* Interactive ROI Calculator */}
-      <div className="relative z-10 max-w-4xl mx-auto rounded-3xl bg-[#110c22]/90 border border-purple-500/20 p-8 backdrop-blur-xl mb-20 shadow-2xl">
-        <div className="flex items-center gap-3 pb-6 border-b border-white/5">
-          <div className="p-3 rounded-2xl bg-purple-600/20 text-purple-400">
-            <Zap size={22} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-100">حاسبة العائد على الاستثمار والوفر المالي (ROI Calculator)</h2>
-            <p className="text-xs text-slate-400 mt-0.5">احسب كم ستوفّر شهرياً من وقت موظفي خدمة العملاء وتكاليف الرواتب</p>
-          </div>
+      {/* Credit System Breakdown (Transparent Explainer) */}
+      <div className="relative z-10 max-w-4xl mx-auto rounded-3xl bg-[#110c22]/70 border border-white/10 p-8 mb-20 shadow-xl">
+        <div className="text-center max-w-lg mx-auto mb-8">
+          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">✦ كيف يُحسب الكريديت والعملاء؟</span>
+          <h2 className="text-2xl font-bold text-white">نظام استهلاك عادل 100% بدون أي هدر</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pt-6 items-center">
-          <div className="md:col-span-7 space-y-6">
-            <div>
-              <div className="flex justify-between text-xs font-semibold text-slate-300 mb-2">
-                <span>عدد المحادثات الشهرية المتوقعة:</span>
-                <span className="font-mono text-purple-400 text-sm font-bold">
-                  {conversationsPerMonth.toLocaleString()} محادثة
-                </span>
-              </div>
-              <input
-                type="range"
-                min="500"
-                max="20000"
-                step="500"
-                value={conversationsPerMonth}
-                onChange={(e) => setConversationsPerMonth(Number(e.target.value))}
-                className="w-full accent-purple-500 h-2 bg-white/10 rounded-lg cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
-                <span>500</span>
-                <span>10,000</span>
-                <span>20,000+</span>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2">
+            <div className="flex items-center gap-2 text-purple-400 font-bold text-xs">
+              <MessageSquare size={16} />
+              <span>العميل النشط (Contact)</span>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5">
-                <span className="text-[11px] text-slate-400 block">ساعات العمل البشرية الموفرة:</span>
-                <div className="text-xl font-bold font-mono text-white mt-1">
-                  ~{estimatedSavedHours} ساعة
-                </div>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5">
-                <span className="text-[11px] text-slate-400 block">تكلفة الرواتب التقليدية الموفرة:</span>
-                <div className="text-xl font-bold font-mono text-purple-400 mt-1">
-                  ~{estimatedSavedCost.toLocaleString()} ج.م
-                </div>
-              </div>
-            </div>
+            <p className="text-[11px] text-gray-300 leading-relaxed">
+              يُحتسب العميل مرة واحدة فقط في الشهر بغض النظر عن عدد الرسائل التي يتبادلها معك. لا تدفع أبداً على جهات الاتصال القديمة غير النشطة!
+            </p>
           </div>
 
-          <div className="md:col-span-5 p-6 rounded-2xl bg-gradient-to-br from-purple-950/40 via-emerald-950/30 to-black/60 border border-emerald-500/30 text-center space-y-3">
-            <span className="text-xs text-gray-400 block">صافي الربح والوفر الشهري لمتجرك:</span>
-            <div className="text-3xl lg:text-4xl font-black font-mono text-emerald-400 tracking-tight">
-              +{netProfit.toLocaleString()} ج.م
+          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+              <Coins size={16} />
+              <span>كريديت الذكاء الاصطناعي</span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              باستخدامك باقة Growth، توفر راتب 2-3 موظفين مع استجابة فورية 24/7 دون أي تأخير.
+            <p className="text-[11px] text-gray-300 leading-relaxed">
+              كل رد ذكي يولده الإيجنت يستهلك 1 كريديت فقط. فحص إيصال إنستاباي الجنائي يستهلك 2 كريديت. شحن الكريديت الإضافي يبدأ من 50 ج.م فقط!
             </p>
-            <Link href="/onboarding" className="block pt-2">
-              <Button size="sm" variant="primary" className="w-full text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-black">
-                ابدأ الـ 3 أيام تجربة مجانية
-              </Button>
-            </Link>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2">
+            <div className="flex items-center gap-2 text-blue-400 font-bold text-xs">
+              <ShieldCheck size={16} />
+              <span>بدون مفاجآت في الفاتورة</span>
+            </div>
+            <p className="text-[11px] text-gray-300 leading-relaxed">
+              لا نقوم بإيقاف حسابك إذا نفد الرصيد فجأة، بل يستمر النظام في تلقي الرسائل وتنبيهك فوراً لإعادة الشحن بكل مرونة.
+            </p>
           </div>
         </div>
       </div>
@@ -350,56 +383,56 @@ export default function PricingPage() {
       {/* Competitor Comparison Snapshot */}
       <div className="relative z-10 max-w-4xl mx-auto rounded-3xl bg-[#110c22]/60 border border-white/5 p-8 backdrop-blur-xl mb-20 shadow-xl">
         <div className="text-center max-w-lg mx-auto mb-8">
-          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">✦ المقارنة السوقية الصريحة</span>
-          <h2 className="text-2xl font-bold text-white">لماذا يختار التجار PR Agent؟</h2>
+          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">✦ المقارنة مع ManyChat و Replyse</span>
+          <h2 className="text-2xl font-bold text-white">مقارنة الأسعار والمميزات وجهاً لوجه</h2>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-right text-xs">
             <thead>
               <tr className="border-b border-white/10 text-gray-400">
-                <th className="pb-3 font-semibold">الميزة الأساسية</th>
-                <th className="pb-3 font-bold text-emerald-400">PR Agent</th>
+                <th className="pb-3 font-semibold">الميزة ومستوى الباقة</th>
+                <th className="pb-3 font-bold text-emerald-400">PR Agent (نظامنا)</th>
+                <th className="pb-3 font-semibold text-gray-400">ManyChat Pro</th>
                 <th className="pb-3 font-semibold text-gray-400">Replyse.tech</th>
-                <th className="pb-3 font-semibold text-gray-400">ManyChat</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-gray-300">
               <tr>
-                <td className="py-3 font-medium text-white">السعر الشهري المبدئي</td>
-                <td className="py-3 font-bold text-emerald-400 font-mono">390 ج.م فقط</td>
-                <td className="py-3 font-mono text-gray-400">950+ ج.م</td>
-                <td className="py-3 font-mono text-gray-400">1,250+ ج.م ($25+)</td>
+                <td className="py-3 font-medium text-white">سعر 2,500 إلى 3,000 عميل نشط</td>
+                <td className="py-3 font-bold text-emerald-400 font-mono">690 ج.م / شهر</td>
+                <td className="py-3 font-mono text-red-400">39$ (~1,950 ج.م)</td>
+                <td className="py-3 font-mono text-gray-400">1,200+ ج.م</td>
               </tr>
               <tr>
-                <td className="py-3 font-medium text-white">فترة تجربة مجانية كاملة</td>
-                <td className="py-3 font-bold text-emerald-400">✓ 3 أيام مجاناً (بدون فيزا)</td>
-                <td className="py-3 text-gray-400">محدودة</td>
-                <td className="py-3 text-gray-400">محدودة الخصائص</td>
+                <td className="py-3 font-medium text-white">تجربة مجانية كاملة بكريديت AI</td>
+                <td className="py-3 font-bold text-emerald-400">✓ 3 أيام مجاناً (500 كريديت)</td>
+                <td className="py-3 text-gray-400">باقة مجانية بدون واتساب</td>
+                <td className="py-3 text-gray-400">تجربة محدودة جداً</td>
               </tr>
               <tr>
-                <td className="py-3 font-medium text-white">فحص إيصالات إنستاباي الجنائي (Vision AI)</td>
+                <td className="py-3 font-medium text-white">فحص إيصالات إنستاباي (Vision OCR)</td>
                 <td className="py-3 font-bold text-emerald-400">✓ مدمج وتلقائي 100%</td>
-                <td className="py-3 text-red-400/80">✗ غير متاح</td>
-                <td className="py-3 text-red-400/80">✗ غير متاح</td>
+                <td className="py-3 text-red-400">✗ غير متاح إطلاقاً</td>
+                <td className="py-3 text-red-400">✗ غير متاح</td>
               </tr>
               <tr>
                 <td className="py-3 font-medium text-white">تأهيل عملاء العقارات وليدز الفيلات</td>
                 <td className="py-3 font-bold text-emerald-400">✓ جاهز ومخصص (Real Estate)</td>
-                <td className="py-3 text-gray-400">عام فقط</td>
                 <td className="py-3 text-gray-400">يحتاج بناء يدوي معقد</td>
+                <td className="py-3 text-gray-400">عام فقط</td>
               </tr>
               <tr>
                 <td className="py-3 font-medium text-white">العميل الاستباقي (Proactive Recovery)</td>
-                <td className="py-3 font-bold text-emerald-400">✓ استرجاع السلات المهجورة ذاتياً</td>
+                <td className="py-3 font-bold text-emerald-400">✓ استرجاع السلات المهجورة آلياً</td>
+                <td className="py-3 text-gray-400">يحتاج إعداد فلوهات خارجية</td>
                 <td className="py-3 text-gray-400">يدوي</td>
-                <td className="py-3 text-gray-400">يحتاج تكلفة إضافية</td>
               </tr>
               <tr>
                 <td className="py-3 font-medium text-white">إصدار بوالص الشحن (بوسطة وأوتو)</td>
-                <td className="py-3 font-bold text-emerald-400">✓ بنقرة واحدة آلياً</td>
+                <td className="py-3 font-bold text-emerald-400">✓ فوري بنقرة واحدة</td>
+                <td className="py-3 text-red-400">✗ غير مدعوم محلياً</td>
                 <td className="py-3 text-gray-400">محدود</td>
-                <td className="py-3 text-red-400/80">✗ غير مدعوم محلياً</td>
               </tr>
             </tbody>
           </table>
@@ -409,8 +442,8 @@ export default function PricingPage() {
       {/* FAQ Accordion */}
       <div className="relative z-10 max-w-3xl mx-auto">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-slate-100">الأسئلة الشائعة حول الخطط والتجربة</h2>
-          <p className="text-xs text-slate-400 mt-1">كل ما تحتاج معرفته عن الأسعار وتفعيل التجربة المجانية</p>
+          <h2 className="text-2xl font-bold text-slate-100">الأسئلة الشائعة حول الكريديت والباقات</h2>
+          <p className="text-xs text-slate-400 mt-1">كل ما تحتاج معرفته عن استهلاك الكريديت وتفعيل التجربة المجانية</p>
         </div>
 
         <div className="space-y-3">
