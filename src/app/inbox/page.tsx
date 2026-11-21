@@ -23,7 +23,11 @@ import {
   Tag,
   Clock,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  ListPlus,
+  PlayCircle,
+  FileCheck2,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -43,6 +47,7 @@ interface ConversationItem {
   agentName: string;
   cartTotal?: number;
   items?: string;
+  tags?: string[];
 }
 
 interface MessageItem {
@@ -61,6 +66,9 @@ export default function SeniorOmnichannelInbox() {
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [quickRepliesOpen, setQuickRepliesOpen] = useState(false);
+  const [macrosOpen, setMacrosOpen] = useState(false);
+  const [cannedList, setCannedList] = useState<any[]>([]);
+  const [macrosList, setMacrosList] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [conversations, setConversations] = useState<ConversationItem[]>([
@@ -76,7 +84,8 @@ export default function SeniorOmnichannelInbox() {
       assignedTo: "ai_bot",
       agentName: "سارة طارق (Sales Closer & OCR)",
       cartTotal: 1300,
-      items: "هودي أسود أوفر سايز (L) × 2"
+      items: "هودي أسود أوفر سايز (L) × 2",
+      tags: ["Instagram_DM", "InstaPay_Pending"]
     },
     {
       id: "conv-2",
@@ -90,7 +99,8 @@ export default function SeniorOmnichannelInbox() {
       assignedTo: "human_agent",
       agentName: "أحمد حسني (Human Specialist)",
       cartTotal: 850,
-      items: "فستان بيج شتوي (M) × 1"
+      items: "فستان بيج شتوي (M) × 1",
+      tags: ["WhatsApp", "Address_Verified"]
     },
     {
       id: "conv-3",
@@ -104,7 +114,8 @@ export default function SeniorOmnichannelInbox() {
       assignedTo: "ai_bot",
       agentName: "PR Sentinel (Auto Pilot)",
       cartTotal: 750,
-      items: "تيشيرت أبيض أساسي (XL) × 3"
+      items: "تيشيرت أبيض أساسي (XL) × 3",
+      tags: ["Delivered", "VIP"]
     }
   ]);
 
@@ -155,6 +166,23 @@ export default function SeniorOmnichannelInbox() {
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const currentMessages = messages[activeConvId] || [];
 
+  // Load Canned Responses and Macros from Backend APIs
+  useEffect(() => {
+    fetch("/api/canned-responses")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.cannedResponses) setCannedList(d.cannedResponses);
+      })
+      .catch(() => {});
+
+    fetch("/api/macros")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.macros) setMacrosList(d.macros);
+      })
+      .catch(() => {});
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -168,7 +196,7 @@ export default function SeniorOmnichannelInbox() {
     if (!activeConv) return;
     const isAi = activeConv.assignedTo === "ai_bot";
     const nextAssignment = isAi ? "human_agent" : "ai_bot";
-    const nextAgentName = isAi ? "أنت (التدخل البشري مباشر)" : "سارة طارق (الذكاء الاصطناعي)";
+    const nextAgentName = isAi ? "أنت (وكيل بشري مباشر)" : "سارة طارق (الذكاء الاصطناعي)";
 
     setConversations((prev) =>
       prev.map((c) =>
@@ -178,12 +206,58 @@ export default function SeniorOmnichannelInbox() {
       )
     );
     soundFX.playPop();
+
+    // Call backend
+    fetch("/api/conversations", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: activeConvId, assignedTo: nextAssignment })
+    }).catch(() => {});
+
     toast(
       isAi ? "info" : "success",
       isAi
         ? "تم إيقاف البوت مؤقتاً؛ أنت الآن تتحكم في المحادثة مباشرة (Human Handoff)"
         : "تم تسليم المحادثة مرة أخرى لوكيل الذكاء الاصطناعي للرد التلقائي"
     );
+  };
+
+  // Execute Intercom-grade Macro
+  const executeMacro = async (macro: any) => {
+    soundFX.playSuccess();
+    setMacrosOpen(false);
+
+    try {
+      await fetch("/api/macros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ macroId: macro.id, conversationId: activeConvId })
+      });
+
+      if (macro.actions.sendReply) {
+        handleSendMessage(macro.actions.sendReply);
+      }
+
+      if (macro.actions.changeStatus) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeConvId ? { ...c, status: macro.actions.changeStatus } : c))
+        );
+      }
+
+      if (macro.actions.addTag) {
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === activeConvId
+              ? { ...c, tags: Array.from(new Set([...(c.tags || []), macro.actions.addTag])) }
+              : c
+          )
+        );
+      }
+
+      toast("success", `تم تنفيذ الماكرو: "${macro.name}"`);
+    } catch (e) {
+      toast("error", "فشل تنفيذ الماكرو");
+    }
   };
 
   // Send message
@@ -233,13 +307,6 @@ export default function SeniorOmnichannelInbox() {
     }
   };
 
-  const quickCannedResponses = [
-    "أهلاً بيك يا فندم! متاح الشحن لجميع المحافظات خلال 48 ساعة فقط.",
-    "تم استلام وتأكيد تحويل إنستاباي، الأوردر قيد التجهيز الآن مع شركة الشحن.",
-    "ممكن تتأكد من رقم الهاتف البديل لتسجيله مع مندوب التوصيل؟",
-    "كوبون الخصم كود: PR10 يمنحك خصم 10% فوري عند تأكيد الطلب الآن."
-  ];
-
   const filteredConversations = conversations.filter((c) => {
     const matchesFilter = filterTab === "all" || c.status === filterTab;
     const matchesSearch =
@@ -260,7 +327,7 @@ export default function SeniorOmnichannelInbox() {
               <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
                 <span>صندوق المحادثات</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono">
-                  Live Sync
+                  Live Omnichannel
                 </span>
               </h2>
             </div>
@@ -335,7 +402,7 @@ export default function SeniorOmnichannelInbox() {
 
         {/* Panel 2: Live Conversation Thread & Handoff Controls */}
         <div className="flex-1 flex flex-col bg-[#07040D] overflow-hidden">
-          {/* Header */}
+          {/* Header with Human Handoff & Macros */}
           <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#0a0714]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-xs shadow-md">
@@ -347,8 +414,40 @@ export default function SeniorOmnichannelInbox() {
               </div>
             </div>
 
-            {/* Seamless Human Handoff Action (Chatbase/ManyChat Architecture) */}
             <div className="flex items-center gap-2">
+              {/* Macros Dropdown (Intercom feature) */}
+              <div className="relative">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setMacrosOpen(!macrosOpen)}
+                  className="text-xs flex items-center gap-1.5"
+                >
+                  <PlayCircle size={14} className="text-purple-400" />
+                  <span>تنفيذ ماكرو (Macros)</span>
+                  <ChevronDown size={12} />
+                </Button>
+
+                {macrosOpen && (
+                  <div className="absolute left-0 mt-2 w-64 bg-[#0e081c] border border-white/10 rounded-2xl shadow-2xl p-2 z-50 text-right animate-slide-down">
+                    <span className="text-[10px] text-slate-500 px-2 py-1 block font-mono">
+                      إجراءات الأتمتة المجمعة:
+                    </span>
+                    {macrosList.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => executeMacro(m)}
+                        className="w-full text-right p-2.5 rounded-xl hover:bg-white/5 text-xs text-slate-200 transition block space-y-0.5"
+                      >
+                        <div className="font-bold text-purple-300">{m.name}</div>
+                        <div className="text-[10px] text-slate-400 leading-tight">{m.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Seamless Human Handoff Action */}
               <Button
                 variant={activeConv?.assignedTo === "human_agent" ? "danger" : "secondary"}
                 size="sm"
@@ -363,7 +462,7 @@ export default function SeniorOmnichannelInbox() {
                 ) : (
                   <>
                     <Headphones size={14} className="text-amber-400" />
-                    <span>تدخل بشري مباشر (Human Handoff)</span>
+                    <span>تدخل بشري مباشر (Handoff)</span>
                   </>
                 )}
               </Button>
@@ -431,16 +530,17 @@ export default function SeniorOmnichannelInbox() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Replies Bar (ManyChat-style Canned Replies) */}
+          {/* Quick Canned Replies Bar (Intercom / Chatwoot) */}
           {quickRepliesOpen && (
             <div className="px-4 py-2 border-t border-white/5 bg-[#0a0714] flex flex-wrap gap-2 animate-slide-up">
-              {quickCannedResponses.map((qr, idx) => (
+              {cannedList.map((qr) => (
                 <button
-                  key={idx}
-                  onClick={() => handleSendMessage(qr)}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] text-slate-300 transition"
+                  key={qr.id}
+                  onClick={() => handleSendMessage(qr.content)}
+                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] text-slate-300 transition flex items-center gap-1.5"
                 >
-                  {qr}
+                  <span className="font-mono text-purple-400 font-bold">{qr.shortCode}</span>
+                  <span className="truncate max-w-[200px]">{qr.content}</span>
                 </button>
               ))}
             </div>
@@ -455,7 +555,7 @@ export default function SeniorOmnichannelInbox() {
                 className="flex items-center gap-1 hover:text-purple-300 transition"
               >
                 <Zap size={12} className="text-purple-400" />
-                <span>الردود السريعة الجاهزة (Canned Responses)</span>
+                <span>الردود الجاهزة السريعة ({cannedList.length} متوفرة)</span>
               </button>
               <span>اضغط Enter للإرسال السريع</span>
             </div>
@@ -512,9 +612,22 @@ export default function SeniorOmnichannelInbox() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400">حالة الإسناد:</span>
                 <span className="font-mono text-emerald-400 font-bold">
-                  {activeConv?.assignedTo === "human_agent" ? "بشري" : "AI"}
+                  {activeConv?.assignedTo === "human_agent" ? "بشري مباشر" : "AI Autonomous"}
                 </span>
               </div>
+
+              {activeConv?.tags && activeConv.tags.length > 0 && (
+                <div className="pt-2">
+                  <span className="text-slate-400 text-xs block mb-1.5">الوسوم (Tags):</span>
+                  <div className="flex flex-wrap gap-1">
+                    {activeConv.tags.map((t, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] text-purple-300 font-mono">
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
