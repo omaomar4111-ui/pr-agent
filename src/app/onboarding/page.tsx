@@ -34,7 +34,8 @@ export default function MerchantOnboardingWizard() {
 
   // Step 1: Store & Industry
   const [storeName, setStoreName] = useState('');
-  const [industry, setIndustry] = useState<'fashion' | 'beauty' | 'electronics' | 'home' | 'food'>('fashion');
+  const [industry, setIndustry] = useState<string>('fashion');
+  const [customIndustry, setCustomIndustry] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [instagramHandle, setInstagramHandle] = useState('');
 
@@ -78,12 +79,14 @@ export default function MerchantOnboardingWizard() {
   const handleSubmitOnboarding = async () => {
     setIsLoading(true);
     try {
+      const resolvedIndustry = industry === 'other' ? (customIndustry.trim() || 'مجال مخصص') : industry;
+
       const res = await fetch('/api/merchant/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           storeName,
-          industry,
+          industry: resolvedIndustry,
           phoneNumber,
           instagramHandle,
           defaultShippingCost: Number(defaultShippingCost) || 45,
@@ -180,25 +183,29 @@ export default function MerchantOnboardingWizard() {
 
                 <div>
                   <label className="text-xs font-bold text-gray-300 block mb-2">مجال النشاط التجاري (Industry) *</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                     {[
                       { id: 'fashion', label: 'ملابس وأزياء', icon: '👗' },
+                      { id: 'real_estate', label: 'عقارات وتطوير (Real Estate)', icon: '🏢', highlight: true },
                       { id: 'beauty', label: 'مستحضرات وتجميل', icon: '✨' },
                       { id: 'electronics', label: 'إلكترونيات وجوالات', icon: '📱' },
                       { id: 'home', label: 'ديكور ومفروشات', icon: '🛋️' },
-                      { id: 'food', label: 'مطاعم وأغذية', icon: '🍔' }
+                      { id: 'food', label: 'مطاعم وكافيهات', icon: '🍔' },
+                      { id: 'other', label: 'مجال مخصص (اكتبه أنت)', icon: '✏️' }
                     ].map((ind) => (
                       <button
                         key={ind.id}
                         type="button"
                         onClick={() => {
-                          setIndustry(ind.id as any);
+                          setIndustry(ind.id);
                           soundFX.playPop();
                         }}
                         className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 ${
                           industry === ind.id
-                            ? 'bg-purple-600/30 border-purple-500 text-white shadow-lg shadow-purple-600/20'
-                            : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'
+                            ? 'bg-purple-600/30 border-purple-500 text-white shadow-lg shadow-purple-600/20 ring-1 ring-purple-400'
+                            : ind.highlight 
+                              ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300 hover:border-emerald-500/60'
+                              : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'
                         }`}
                       >
                         <span className="text-lg">{ind.icon}</span>
@@ -206,6 +213,25 @@ export default function MerchantOnboardingWizard() {
                       </button>
                     ))}
                   </div>
+
+                  {industry === 'other' && (
+                    <div className="mt-3 animate-fade-in">
+                      <input
+                        type="text"
+                        value={customIndustry}
+                        onChange={(e) => setCustomIndustry(e.target.value)}
+                        placeholder="اكتب مجالك بدقة (مثال: عيادات وأسنان، سياحة وحجوزات، كورسات تعليمية...)"
+                        className="w-full h-11 rounded-xl bg-purple-950/20 border border-purple-500/40 px-4 text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {industry === 'real_estate' && (
+                    <div className="mt-3 p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2 animate-fade-in">
+                      <ShieldCheck size={16} className="shrink-0 text-emerald-400" />
+                      <span>تم تفعيل قوالب تأهيل العملاء العقاريين (Budget, Location, Delivery Date) تلقائياً 🏢</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -426,6 +452,17 @@ export default function MerchantOnboardingWizard() {
                 </h2>
                 <p className="text-xs text-gray-300 leading-relaxed">
                   تم حفظ بيانات مجالك وقواعد الشحن والدفع وتدريب الإيجنت بنجاح. الخطوة الأخيرة هي ربط رقم الواتساب أو صفحة إنستجرام ليبدأ الرد فوراً.
+                </p>
+              </div>
+
+              {/* Anti-Ban Shield Badge Notice */}
+              <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-right text-xs space-y-1 max-w-md mx-auto">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                  <ShieldCheck size={16} />
+                  <span>درع الحماية ضد الحظر (Meta & WhatsApp Anti-Ban Shield) مُفعّل</span>
+                </div>
+                <p className="text-[11px] text-gray-300 leading-relaxed">
+                  يتم محاكاة سرعة الكتابة البشرية (Typing Jitter)، وتوزيع الرسائل تدريجياً، مع احترام نافذة الـ 24 ساعة الرسمية لتفادي أي حظر للأرقام.
                 </p>
               </div>
 
