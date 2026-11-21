@@ -196,11 +196,11 @@ export function InteractivePhoneTour() {
           {/* Ambient Glow Backdrop (Purple + Cyber Emerald) */}
           <div className="absolute -inset-4 bg-gradient-to-tr from-purple-600/20 via-pink-600/10 to-emerald-500/20 blur-3xl rounded-full opacity-60 -z-10 pointer-events-none" />
 
-          {/* iPhone 16 Pro Titanium Chassis */}
-          <div className="w-[320px] sm:w-[350px] h-[670px] rounded-[52px] bg-[#1a1728] p-[10px] shadow-[0_25px_70px_rgba(0,0,0,0.9),0_0_40px_rgba(139,92,246,0.18)] border-[3px] border-[#393256] relative overflow-hidden flex flex-col">
+          {/* iPhone 16 Pro Titanium Chassis (Fluid Adaptive Width) */}
+          <div className="w-[300px] xs:w-[320px] sm:w-[360px] max-w-[92vw] h-[640px] sm:h-[670px] rounded-[48px] sm:rounded-[52px] bg-[#1a1728] p-[8px] sm:p-[10px] shadow-[0_25px_70px_rgba(0,0,0,0.9),0_0_40px_rgba(139,92,246,0.18)] border-[2.5px] sm:border-[3px] border-[#393256] relative overflow-hidden flex flex-col">
             
             {/* Screen Bezel Inset */}
-            <div className="w-full h-full rounded-[44px] bg-[#0c0a14] overflow-hidden flex flex-col relative border border-white/10 select-none">
+            <div className="w-full h-full rounded-[40px] sm:rounded-[44px] bg-[#0c0a14] overflow-hidden flex flex-col relative border border-white/10 select-none">
               
               {/* iOS Status Bar & Dynamic Island */}
               <div className="h-10 pt-2 px-6 flex items-center justify-between text-white text-[11px] font-semibold tracking-tight z-30 shrink-0">

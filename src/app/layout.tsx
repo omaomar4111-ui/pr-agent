@@ -6,6 +6,7 @@ import { AppNavigation } from "@/components/AppNavigation";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { ToastContainer } from "@/components/ui/Toast";
 import { CommandPalette } from "@/components/CommandPalette";
+import { DeviceTelemetryTracker } from "@/components/DeviceTelemetryTracker";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const tajawal = Tajawal({
@@ -92,6 +93,7 @@ export default function RootLayout({
         <AppNavigation />
         {children}
         <MobileBottomBar />
+        <DeviceTelemetryTracker />
         <PwaInstallPrompt />
         <ToastContainer />
         <CommandPalette />
