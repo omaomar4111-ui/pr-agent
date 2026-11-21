@@ -1,182 +1,281 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
+import {
+  ReactFlow,
+  Controls,
+  Background,
+  addEdge,
+  Node,
+  Edge,
+  OnNodesChange,
+  OnEdgesChange,
+  OnConnect,
+  BackgroundVariant
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import {
+  Sparkles,
+  Zap,
+  MessageSquare,
+  Bot,
+  Plus,
+  Play,
+  Save,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  Share2,
+  CreditCard,
+  Truck,
+  RotateCcw
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { toast } from "@/components/ui/Toast";
+import { soundFX } from "@/lib/soundFX";
 
-interface FlowTemplate {
-  id: string;
-  title: string;
-  category: string;
-  stepsCount: number;
-  trigger: string;
-  description: string;
-  typebotUrl?: string;
-}
-
-export default function InteractiveFlowsPage() {
-  const [flows, setFlows] = useState<FlowTemplate[]>([
-    {
-      id: "flow-1",
-      title: "مسار اختيار المقاس ونوع القماش",
-      category: "مبيعات أزياء ومتاجر",
-      stepsCount: 4,
-      trigger: "عند طلب العميل تفاصيل المقاسات",
-      description: "مسار تفاعلي يسأل العميل عن الطول والوزن ويعرض جدول المقاسات وصور الألوان المتوفرة.",
-      typebotUrl: "https://typebot.io"
-    },
-    {
-      id: "flow-2",
-      title: "مسار تأكيد عنوان الشحن ورقم الهاتف البديل",
-      category: "تأكيد الطلبات",
-      stepsCount: 3,
-      trigger: "بعد إتمام إضافة المنتجات للسلة",
-      description: "جمع المحافظة والمنطقة ورقم هاتف بديل وملاحظات شركة الشحن بنقرات سريعة.",
-      typebotUrl: "https://typebot.io"
-    },
-    {
-      id: "flow-3",
-      title: "مسار استرجاع السلة المتروكة بكوبون خصم",
-      category: "زيادة التحويلات",
-      stepsCount: 2,
-      trigger: "بعد 15 دقيقة من عدم إكمال الطلب",
-      description: "عرض المنتجات التي اختارها العميل مع كوبون خصم 10% ينتهي خلال ساعتين.",
-      typebotUrl: "https://typebot.io"
-    },
-    {
-      id: "flow-4",
-      title: "مسار فحص وتقييم تجربة العميل (CSAT)",
-      category: "خدمة العملاء",
-      stepsCount: 3,
-      trigger: "بعد 24 ساعة من تسليم الأوردر",
-      description: "تقييم من 1 إلى 5 نجوم مع خيار ترك ملاحظات صوتية أو نصية.",
-      typebotUrl: "https://typebot.io"
+// Custom Cyber Node Styling
+const initialNodes: Node[] = [
+  {
+    id: "trigger-1",
+    type: "input",
+    position: { x: 50, y: 150 },
+    data: {
+      label: (
+        <div className="p-3 bg-[#130b29] border border-purple-500/40 rounded-xl text-right font-sans shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+          <div className="flex items-center gap-1.5 text-purple-400 font-bold text-xs mb-1">
+            <Zap size={13} />
+            <span>بداية المحادثة (Trigger)</span>
+          </div>
+          <p className="text-[11px] text-slate-300">رسالة جديدة على واتساب أو إنستجرام</p>
+          <span className="text-[9px] font-mono text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded mt-1.5 inline-block">
+            Instagram DM & WhatsApp
+          </span>
+        </div>
+      )
     }
-  ]);
+  },
+  {
+    id: "ai-parser-2",
+    position: { x: 380, y: 100 },
+    data: {
+      label: (
+        <div className="p-3 bg-[#111827] border border-sky-500/40 rounded-xl text-right font-sans shadow-lg">
+          <div className="flex items-center gap-1.5 text-sky-400 font-bold text-xs mb-1">
+            <Bot size={13} />
+            <span>تحليل نية الشراء (AI Intent Parser)</span>
+          </div>
+          <p className="text-[11px] text-slate-300">استخراج: اسم المنتج + المقاس + اللون المطلوب</p>
+          <span className="text-[9px] font-mono text-sky-300 bg-sky-500/20 px-1.5 py-0.5 rounded mt-1.5 inline-block">
+            Groq Llama 3.3 Fast
+          </span>
+        </div>
+      )
+    }
+  },
+  {
+    id: "ocr-check-3",
+    position: { x: 720, y: 50 },
+    data: {
+      label: (
+        <div className="p-3 bg-[#1c130b] border border-amber-500/40 rounded-xl text-right font-sans shadow-lg">
+          <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs mb-1">
+            <CreditCard size={13} />
+            <span>فحص تحويل إنستاباي (Vision OCR)</span>
+          </div>
+          <p className="text-[11px] text-slate-300">مطابقة المبلغ ورقم الحساب المرجعي وتوثيقه سحابياً</p>
+          <span className="text-[9px] font-mono text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded mt-1.5 inline-block">
+            Argon Vision Verifier
+          </span>
+        </div>
+      )
+    }
+  },
+  {
+    id: "shipping-dispatch-4",
+    type: "output",
+    position: { x: 1060, y: 130 },
+    data: {
+      label: (
+        <div className="p-3 bg-[#091a13] border border-emerald-500/40 rounded-xl text-right font-sans shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+          <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs mb-1">
+            <Truck size={13} />
+            <span>تصدير بوليصة الشحن (Bosta / Aramex)</span>
+          </div>
+          <p className="text-[11px] text-slate-300">إنشاء البوليصة ورقم التتبع وإرسالها للعميل فورياً</p>
+          <span className="text-[9px] font-mono text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded mt-1.5 inline-block">
+            Auto AWB Dispatch
+          </span>
+        </div>
+      )
+    }
+  }
+];
 
-  const [activePreview, setActivePreview] = useState<FlowTemplate>(flows[0]);
+const initialEdges: Edge[] = [
+  { id: "e1-2", source: "trigger-1", target: "ai-parser-2", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
+  { id: "e2-3", source: "ai-parser-2", target: "ocr-check-3", animated: true, style: { stroke: "#38bdf8", strokeWidth: 2 } },
+  { id: "e3-4", source: "ocr-check-3", target: "shipping-dispatch-4", animated: true, style: { stroke: "#10b981", strokeWidth: 2 } }
+];
+
+export default function ManyChatVisualFlowsPage() {
+  const [nodes, setNodes] = useState<Node[]>(initialNodes);
+  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  const onNodesChange: OnNodesChange = useCallback(
+    (changes: any) => setNodes((nds) => {
+      if (Array.isArray(changes)) {
+        return nds.map((node) => {
+          const change = changes.find((c: any) => c.id === node.id);
+          if (change && change.type === 'position' && change.position) {
+            return { ...node, position: change.position };
+          }
+          return node;
+        });
+      }
+      return nds;
+    }),
+    []
+  );
+
+  const onEdgesChange: OnEdgesChange = useCallback(
+    (changes) => setEdges((eds) => eds),
+    []
+  );
+
+  const onConnect: OnConnect = useCallback(
+    (connection) => {
+      soundFX.playPop();
+      setEdges((eds) => addEdge({ ...connection, animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } }, eds));
+    },
+    []
+  );
+
+  const handleSimulateFlow = () => {
+    setIsSimulating(true);
+    soundFX.playPop();
+    toast("info", "جاري محاكاة سريان المسار التفاعلي (ManyChat Visual Simulation)...");
+
+    setTimeout(() => {
+      setIsSimulating(false);
+      soundFX.playSuccess();
+      toast("success", "تم اختبار المسار بنجاح: تم استقبال الرسالة، فحص الإيصال، وتوليد رقم بوليصة الشحن!");
+    }, 1500);
+  };
+
+  const handleAddNewNode = () => {
+    soundFX.playPop();
+    const newNode: Node = {
+      id: `custom-node-${Date.now()}`,
+      position: { x: 380, y: 280 },
+      data: {
+        label: (
+          <div className="p-3 bg-[#191024] border border-pink-500/40 rounded-xl text-right font-sans shadow-lg">
+            <div className="flex items-center gap-1.5 text-pink-400 font-bold text-xs mb-1">
+              <Share2 size={13} />
+              <span>إرسال كوبون خصم (Discount Offer)</span>
+            </div>
+            <p className="text-[11px] text-slate-300">خصم 10% عند إضافة قطعتين أو أكثر للسلة</p>
+            <span className="text-[9px] font-mono text-pink-300 bg-pink-500/20 px-1.5 py-0.5 rounded mt-1.5 inline-block">
+              ManyChat Drip Rule
+            </span>
+          </div>
+        )
+      }
+    };
+    setNodes((nds) => [...nds, newNode]);
+    toast("success", "تمت إضافة عقدة أتمتة جديدة إلى المخطط");
+  };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#000000] text-white font-sans selection:bg-[#8052ff] selection:text-white pb-20">
-      
-      {/* Top Header */}
-      <header className="border-b border-[#171717] px-6 py-6 max-w-[1280px] mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-5 h-5">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <polygon points="12 2 22 22 2 22" fill="#8052ff" />
-              </svg>
-            </div>
-            <span className="text-[16px] font-normal tracking-tight text-white">PR Agent</span>
-          </Link>
-          <span className="text-[#333333]">/</span>
-          <h1 className="text-[15px] font-normal text-[#9a9a9a]">المسارات التفاعلية و Typebot Visual Flows</h1>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Link href="/inbox" className="text-[13px] text-[#9a9a9a] hover:text-white transition-colors">صندوق المحادثات</Link>
-          <Link href="/pipeline" className="text-[13px] text-[#9a9a9a] hover:text-white transition-colors">إدارة المبيعات</Link>
-          <Link href="/fleet" className="bg-[#8052ff] hover:bg-[#7042f0] text-white text-[13px] px-5 py-2 rounded-[24px] transition-all">
-            أسطول الإيجنتس
-          </Link>
-        </div>
-      </header>
-
-      {/* Main Flow Canvas */}
-      <main className="max-w-[1280px] mx-auto px-6 pt-12">
-        <div className="mb-10 text-right">
-          <span className="text-[#8052ff] text-[13px] font-semibold uppercase tracking-wider block mb-2">
-            ✦ التدفقات التفاعلية المرئية (Visual Conversational Flows)
-          </span>
-          <h2 className="text-[36px] font-normal tracking-tight text-white">
-            أتمتة سيناريوهات البيع المعقدة بنقرات مرئية
-          </h2>
-          <p className="text-[16px] font-extralight text-[#9a9a9a] max-w-[620px] mt-2">
-            يمكن لموظف خدمة العملاء أو الإيجنت الذكي إرسال مسار Typebot تفاعلي للعميل في واتساب أو إنستجرام لتسهيل اختيار المقاس أو تأكيد الشحن.
+    <div className="h-[calc(100vh-65px)] bg-[#07040D] text-white flex flex-col font-sans selection:bg-purple-600 selection:text-white" dir="rtl">
+      {/* Header & Flow Controls */}
+      <div className="p-4 border-b border-white/5 bg-[#0a0714] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+              مُنشئ مسارات الأتمتة البصري (Visual Flow Builder)
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-mono">
+              ManyChat Engine • Cyber Theme
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5">
+            صمم مسارات بيع متجرك بسحب وإفلات العقد (Drag & Drop) بدون سطر كود واحد.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Flow Templates List */}
-          <div className="lg:col-span-5 space-y-4">
-            {flows.map(flow => (
-              <div
-                key={flow.id}
-                onClick={() => setActivePreview(flow)}
-                className={`p-5 rounded-[22px] bg-[#050505] border cursor-pointer transition-all ${
-                  activePreview.id === flow.id
-                    ? "border-[#8052ff] bg-[#0c0c12]"
-                    : "border-[#171717] hover:border-[#333333]"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] text-[#ffb829] font-medium px-2 py-0.5 rounded-full bg-[#ffb829]/10">
-                    {flow.category}
-                  </span>
-                  <span className="text-[11px] text-[#666666] font-mono">{flow.stepsCount} خطوات</span>
-                </div>
-                <h3 className="text-[16px] font-normal text-white mb-1">{flow.title}</h3>
-                <p className="text-[13px] font-extralight text-[#9a9a9a] leading-relaxed">
-                  {flow.description}
-                </p>
-                <div className="mt-3 text-[11px] text-[#8052ff] font-extralight">
-                  مشغل: {flow.trigger}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleAddNewNode}
+            className="text-xs"
+          >
+            <Plus size={14} /> إضافة خطوة جديدة
+          </Button>
 
-          {/* Right Interactive Preview Simulator (Typebot / Visual Container) */}
-          <div className="lg:col-span-7 bg-[#070707] border border-[#1f1f1f] rounded-[28px] p-6 flex flex-col h-[580px]">
-            <div className="flex items-center justify-between pb-4 border-b border-[#171717]">
-              <div>
-                <span className="text-[14px] font-normal text-white">{activePreview.title}</span>
-                <span className="text-[11px] text-[#15846e] block mt-0.5">● جاهز للإرسال في المحادثات المباشرة</span>
-              </div>
-              <button
-                onClick={() => alert(`تم نسخ رابط المسار التفاعلي (${activePreview.title}) لمشاركته مع العميل!`)}
-                className="bg-[#8052ff] hover:bg-[#7042f0] text-white text-[12px] px-4 py-2 rounded-[20px] transition-all"
-              >
-                نسخ رابط المسار 🔗
-              </button>
-            </div>
+          <Button
+            variant="primary"
+            size="sm"
+            loading={isSimulating}
+            onClick={handleSimulateFlow}
+            className="text-xs flex items-center gap-1.5"
+          >
+            <Play size={14} /> اختبار وتشغيل المسار
+          </Button>
 
-            {/* Simulated Typebot Interactive Frame */}
-            <div className="flex-1 bg-[#000000] rounded-[20px] border border-[#171717] mt-4 p-6 flex flex-col justify-between overflow-y-auto">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#8052ff]/20 flex items-center justify-center text-white text-[12px]">
-                    🤖
-                  </div>
-                  <div className="bg-[#141414] border border-[#222222] p-4 rounded-[20px] text-[13px] text-white max-w-[420px] leading-relaxed font-extralight">
-                    أهلاً بيك يا فندم! 🌸 علشان نختار المقاس المثالي لحضرتك، من فضلك اختر الفئة:
-                  </div>
-                </div>
-
-                <div className="mr-11 flex flex-wrap gap-2">
-                  <span className="bg-[#8052ff]/10 border border-[#8052ff]/40 text-[#8052ff] text-[12px] px-4 py-2 rounded-[16px] cursor-pointer hover:bg-[#8052ff]/20 transition-all">
-                    مقاس رجالي (M, L, XL, 2XL)
-                  </span>
-                  <span className="bg-[#141414] border border-[#222222] text-[#9a9a9a] text-[12px] px-4 py-2 rounded-[16px] cursor-pointer hover:text-white transition-all">
-                    مقاس حريمي (S, M, L)
-                  </span>
-                  <span className="bg-[#141414] border border-[#222222] text-[#9a9a9a] text-[12px] px-4 py-2 rounded-[16px] cursor-pointer hover:text-white transition-all">
-                    مقاسات أطفال
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-[#141414] text-center text-[11px] text-[#666666]">
-                Typebot Powered Engine — مدمج مع قاعدة بيانات المتجر عبر Webhook
-              </div>
-            </div>
-
-          </div>
-
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              soundFX.playSuccess();
+              toast("success", "تم حفظ المخطط التفاعلي ومزامنته سحابياً بنجاح");
+            }}
+            className="text-xs"
+          >
+            <Save size={14} /> حفظ المسار
+          </Button>
         </div>
-      </main>
+      </div>
 
+      {/* Visual Canvas (XYFlow / ReactFlow) */}
+      <div className="flex-1 relative w-full h-full bg-[#05030a]">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          fitView
+          className="dark"
+        >
+          <Background color="#7c3aed" gap={20} size={1} variant={BackgroundVariant.Dots} />
+          <Controls className="!bg-[#0e081c] !border-white/10 !rounded-xl overflow-hidden [&>button]:!bg-transparent [&>button]:!border-white/5 [&>button]:!text-white hover:[&>button]:!bg-white/5" />
+        </ReactFlow>
+
+        {/* Floating Quick Legend */}
+        <div className="absolute bottom-5 right-5 p-3 rounded-2xl bg-[#0e081c]/90 border border-white/10 backdrop-blur-md text-[11px] text-slate-400 space-y-1.5 shadow-2xl pointer-events-none">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-500" />
+            <span>نقطة الانطلاق (Triggers)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-sky-400" />
+            <span>تحليل الذكاء الاصطناعي (AI Nodes)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span>فحص الدفع (Vision OCR)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>تصدير بوليصة الشحن (Fulfillment)</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

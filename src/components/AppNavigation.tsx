@@ -49,9 +49,15 @@ export function AppNavigation() {
       badge: "3"
     },
     {
+      label: "مسارات الأتمتة (Flows)",
+      href: "/flows",
+      icon: <Layers size={16} />,
+      isNew: true
+    },
+    {
       label: "مسار الطلبات (Pipeline)",
       href: "/pipeline",
-      icon: <Layers size={16} />
+      icon: <Package size={16} />
     },
     {
       label: "كتالوج الـ AI",
