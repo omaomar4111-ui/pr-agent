@@ -3,6 +3,7 @@ import { Inter, Tajawal } from "next/font/google";
 import "./globals.css";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { AppNavigation } from "@/components/AppNavigation";
+import { ToastContainer } from "@/components/ui/Toast";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const tajawal = Tajawal({
@@ -89,6 +90,7 @@ export default function RootLayout({
         <AppNavigation />
         {children}
         <PwaInstallPrompt />
+        <ToastContainer />
       </body>
     </html>
   );
