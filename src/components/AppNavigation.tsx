@@ -112,12 +112,6 @@ export function AppNavigation() {
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-2">
               <Logo size="sm" />
-              <span className="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
-                PR Agent
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-600/30 text-purple-300 border border-purple-500/30 font-mono">
-                  PRO
-                </span>
-              </span>
             </Link>
 
             {/* Desktop Navigation */}
