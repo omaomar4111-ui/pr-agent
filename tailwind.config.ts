@@ -5,17 +5,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'bg-base': 'var(--bg-base)',
-        'bg-elevated': 'var(--bg-elevated)',
+        'bg-base': '#0f1011',
+        'bg-elevated': '#1a1b1e',
+        'bg-card': '#1a1b1e',
         'brand': {
-          DEFAULT: 'var(--brand-primary)',
-          light: 'var(--brand-light)',
-          accent: 'var(--brand-accent)',
+          DEFAULT: '#8b5cf6',
+          deep: '#7c3aed',
+          light: '#a78bfa',
+          lime: '#d3fd50',
+          accent: '#a855f7',
+        },
+        'lime': {
+          DEFAULT: '#d3fd50',
+          glow: 'rgba(211, 253, 80, 0.4)',
         },
         'text': {
-          primary: 'var(--text-primary)',
-          secondary: 'var(--text-secondary)',
-          muted: 'var(--text-muted)',
+          primary: '#ffffff',
+          secondary: '#9ca3af',
+          muted: '#6b7280',
         },
       },
       fontFamily: {

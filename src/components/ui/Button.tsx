@@ -5,13 +5,14 @@ import { cn } from '@/lib/utils';
 import { soundFX } from '@/lib/soundFX';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)] select-none cursor-pointer',
+  'inline-flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)] select-none cursor-pointer',
   {
     variants: {
       variant: {
-        primary: 'bg-gradient-to-r from-brand via-purple-600 to-brand-accent text-white hover:shadow-[0_0_25px_var(--brand-glow)] hover:scale-[1.01] shadow-[var(--shadow-glow)]',
-        secondary: 'bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 hover:scale-[1.01]',
-        ghost: 'text-[var(--text-secondary)] hover:text-white hover:bg-white/5',
+        lime: 'bg-[#d3fd50] text-[#0f1011] hover:bg-[#c4ee3e] hover:shadow-[0_0_25px_rgba(211,253,80,0.45)] hover:scale-[1.01] shadow-lg font-black',
+        primary: 'bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] text-white hover:from-[#7c3aed] hover:to-[#6d28d9] hover:shadow-[0_0_25px_rgba(139,92,246,0.4)] hover:scale-[1.01] shadow-[var(--shadow-glow)] border border-purple-400/20',
+        secondary: 'bg-[#1a1b1e] border border-white/10 text-white hover:bg-white/10 hover:border-white/20 hover:scale-[1.01]',
+        ghost: 'text-[#9ca3af] hover:text-white hover:bg-white/5',
         danger: 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20',
       },
       size: {
@@ -20,7 +21,7 @@ const buttonVariants = cva(
         lg: 'h-12 px-6 text-base',
       },
     },
-    defaultVariants: { variant: 'primary', size: 'md' },
+    defaultVariants: { variant: 'lime', size: 'md' },
   }
 );
 

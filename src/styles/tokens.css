@@ -1,26 +1,30 @@
 :root {
-  /* Colors — Dark Theme (Linear / Vercel Grade) */
-  --bg-base: #0a0e1a;
-  --bg-elevated: #111827;
-  --bg-card: rgba(17, 24, 39, 0.6);
-  --bg-hover: rgba(255, 255, 255, 0.03);
+  /* Colors — Cyber Lime & Electric Purple Luxury Palette */
+  --bg-base: #0f1011;
+  --bg-elevated: #1a1b1e;
+  --bg-card: rgba(26, 27, 30, 0.75);
+  --bg-hover: rgba(255, 255, 255, 0.04);
   
-  /* Brand */
-  --brand-primary: #6366f1;
-  --brand-light: #818cf8;
-  --brand-glow: rgba(99, 102, 241, 0.4);
+  /* Brand Accents */
+  --brand-lime: #d3fd50;
+  --brand-lime-glow: rgba(211, 253, 80, 0.35);
+  --brand-primary: #8b5cf6;
+  --brand-light: #a78bfa;
+  --brand-deep: #7c3aed;
+  --brand-glow: rgba(139, 92, 246, 0.35);
   --brand-accent: #a855f7;
   --brand-success: #10b981;
   --brand-warning: #f59e0b;
   --brand-danger: #ef4444;
   
-  /* Text */
-  --text-primary: #f9fafb;
+  /* Text Typography */
+  --text-primary: #ffffff;
   --text-secondary: #9ca3af;
   --text-muted: #6b7280;
   
   /* Borders */
-  --border-subtle: rgba(99, 102, 241, 0.15);
+  --border-subtle: rgba(211, 253, 80, 0.15);
+  --border-purple: rgba(139, 92, 246, 0.25);
   --border-default: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
   
@@ -41,9 +45,10 @@
   --radius-xl: 24px;
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
   --shadow-glow: 0 0 40px -10px var(--brand-glow);
+  --shadow-lime: 0 0 35px -8px var(--brand-lime-glow);
   
   /* Typography */
   --font-display: 'Tajawal', 'Inter', system-ui, sans-serif;
@@ -56,7 +61,7 @@
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Base */
+/* Base Body Application */
 body {
   background: var(--bg-base) !important;
   color: var(--text-primary) !important;
@@ -64,18 +69,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Custom Selection Highlight */
+::selection {
+  background: var(--brand-lime) !important;
+  color: #000000 !important;
+}
+
 /* Focus rings */
 *:focus-visible {
-  outline: 2px solid var(--brand-light);
+  outline: 2px solid var(--brand-lime);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { 
-  background: rgba(99, 102, 241, 0.3); 
+  background: rgba(211, 253, 80, 0.25); 
   border-radius: 4px; 
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+::-webkit-scrollbar-thumb:hover { background: rgba(211, 253, 80, 0.45); }
