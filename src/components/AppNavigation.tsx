@@ -77,6 +77,12 @@ export function AppNavigation() {
       icon: <Send size={16} />
     },
     {
+      label: "العميل الاستباقي (Proactive)",
+      href: "/agents/proactive",
+      icon: <Sparkles size={16} className="text-emerald-400" />,
+      isNew: true
+    },
+    {
       label: "أسطول الوكلاء",
       href: "/fleet",
       icon: <Bot size={16} />
