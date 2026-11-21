@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Tajawal } from "next/font/google";
 import "./globals.css";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
+import { AppNavigation } from "@/components/AppNavigation";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const tajawal = Tajawal({
@@ -85,6 +86,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-[#0B0F17] text-white font-sans antialiased min-h-screen">
+        <AppNavigation />
         {children}
         <PwaInstallPrompt />
       </body>
