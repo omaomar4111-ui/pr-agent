@@ -18,34 +18,61 @@ import {
   MessageCircle,
   Truck,
   Check,
-  Key
+  Key,
+  Copy,
+  Zap,
+  HelpCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { GlowingSpotlightCard } from '@/components/GlowingSpotlightCard';
+import { soundFX } from '@/lib/soundFX';
+import { toast } from '@/components/ui/Toast';
 
 export default function ChannelConnectPage() {
   const [activeChannel, setActiveChannel] = useState<'whatsapp' | 'meta' | 'shipping'>('whatsapp');
 
-  // WhatsApp QR States
+  // Multi-Tenant Session State (Self-Serve per Client)
+  const [tenantName, setTenantName] = useState('متجرك الجديد');
+  const [tenantId, setTenantId] = useState('TENANT-994201');
+
+  // WhatsApp QR & Pairing States
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [isQrLoading, setIsQrLoading] = useState(false);
   const [waConnected, setWaConnected] = useState(false);
   const [connectedNumber, setConnectedNumber] = useState<string | null>(null);
+  const [usePairingCodeMode, setUsePairingCodeMode] = useState(false);
+  const [phoneNumberInput, setPhoneNumberInput] = useState('');
+  const [pairingCodeRequested, setPairingCodeRequested] = useState(false);
 
   // Meta States
   const [metaConnected, setMetaConnected] = useState(false);
   const [metaConnecting, setMetaConnecting] = useState(false);
+  const [selectedMetaPage, setSelectedMetaPage] = useState('page-1');
 
   // Shipping Courier API Keys
   const [bostaKey, setBostaKey] = useState('bst_live_99201481092834');
   const [aramexAccount, setAramexAccount] = useState('ARM-CAI-99210');
   const [shippingSaved, setShippingSaved] = useState(false);
 
+  // Load client stored profile
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('pra_merchant_profile');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.storeName) setTenantName(parsed.storeName);
+          if (parsed.tenantId) setTenantId(parsed.tenantId);
+          if (parsed.phoneNumber) setPhoneNumberInput(parsed.phoneNumber);
+        } catch (e) {}
+      }
+    }
+  }, []);
+
   const fetchWhatsAppQR = async () => {
     setIsQrLoading(true);
     try {
-      const res = await fetch('/api/channels/connect?channel=whatsapp');
+      const res = await fetch(`/api/channels/connect?channel=whatsapp&tenantId=${tenantId}`);
       const data = await res.json();
       if (data.success) {
         setQrCodeUrl(data.qrCode);
@@ -60,19 +87,22 @@ export default function ChannelConnectPage() {
 
   useEffect(() => {
     fetchWhatsAppQR();
-  }, []);
+  }, [tenantId]);
 
   const handleSimulateScan = async () => {
+    soundFX.playPop();
     try {
       const res = await fetch('/api/channels/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel: 'whatsapp', action: 'verify_scan' })
+        body: JSON.stringify({ channel: 'whatsapp', action: 'verify_scan', tenantId })
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playSuccess();
         setWaConnected(true);
-        setConnectedNumber(data.phoneNumber);
+        setConnectedNumber(phoneNumberInput || data.phoneNumber);
+        toast('success', 'تم ربط رقم الواتساب بالذكاء الاصطناعي بنجاح!');
         confetti({
           particleCount: 100,
           spread: 70,
@@ -81,280 +111,411 @@ export default function ChannelConnectPage() {
         });
       }
     } catch (err) {
-      console.error(err);
+      toast('error', 'فشل التحقق من الاتصال');
     }
   };
 
   const handleConnectMeta = async () => {
+    soundFX.playPop();
     setMetaConnecting(true);
     setTimeout(async () => {
       try {
         const res = await fetch('/api/channels/connect', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channel: 'meta', action: 'connect_mock' })
+          body: JSON.stringify({ channel: 'meta', action: 'connect_mock', tenantId })
         });
         const data = await res.json();
         if (data.success) {
+          soundFX.playSuccess();
           setMetaConnected(true);
+          toast('success', 'تم ربط صفحة إنستجرام وفيسبوك وتفعيل الرد على الكومنتات!');
           confetti({
-            particleCount: 80,
+            particleCount: 90,
             spread: 60,
             origin: { y: 0.65 },
-            colors: ['#3b82f6', '#ec4899', '#ffffff']
+            colors: ['#a855f7', '#38bdf8', '#22c55e']
           });
         }
+      } catch (err) {
+        toast('error', 'حدث خطأ أثناء الربط مع ميتا');
       } finally {
         setMetaConnecting(false);
       }
     }, 1200);
   };
 
-  return (
-    <div className="min-h-screen bg-[#07040D] text-white p-6 md:p-10 font-sans selection:bg-purple-600 selection:text-white" dir="rtl">
-      {/* Background Glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-purple-600/10 blur-[140px] pointer-events-none rounded-full" />
+  const handleSaveShipping = (e: React.FormEvent) => {
+    e.preventDefault();
+    soundFX.playSuccess();
+    setShippingSaved(true);
+    toast('success', 'تم حفظ مفاتيح الربط مع شركة الشحن بنجاح!');
+    setTimeout(() => setShippingSaved(false), 3000);
+  };
 
-      {/* Header */}
-      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-8 border-b border-white/5">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              مركز ربط القنوات وبوابات الشحن
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-mono">
-              Omnichannel Connect Wizard
-            </span>
+  const copyText = (txt: string) => {
+    navigator.clipboard.writeText(txt);
+    soundFX.playPop();
+    toast('info', 'تم النسخ إلى الحافظة');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#07040D] text-white p-4 sm:p-8 font-sans selection:bg-purple-600 selection:text-white pb-24" dir="rtl">
+      
+      {/* Client Tenant Identity Bar */}
+      <div className="max-w-5xl mx-auto mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#100b22] to-emerald-950/30 border border-purple-500/20 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold">
+            🏢
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            اربط رقم الواتساب بالـ QR Code، وفعّل وصول الذكاء الاصطناعي لرسائل إنستاجرام وفيسبوك وبوالص بوسطة.
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-white">{tenantName}</span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 font-mono text-[10px] border border-emerald-500/30">
+                مساحة عمل خاصة
+              </span>
+            </div>
+            <span className="text-[11px] text-gray-400 font-mono">كود الحساب: {tenantId}</span>
+          </div>
         </div>
 
         <Link
-          href="/dashboard"
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium transition"
+          href="/inbox"
+          className="text-xs text-purple-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 transition-all flex items-center gap-1.5"
         >
-          <ArrowRight size={14} /> لوحة التحكم
+          <span>صندوق المحادثات</span>
+          <ArrowRight size={13} className="rotate-180" />
         </Link>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-3 my-8 border-b border-white/5 pb-4">
-        <button
-          onClick={() => setActiveChannel('whatsapp')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition ${
-            activeChannel === 'whatsapp'
-              ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-              : 'text-slate-400 hover:text-white bg-white/[0.02]'
-          }`}
-        >
-          <MessageSquare size={16} /> WhatsApp Business API
-          {waConnected && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
-        </button>
-
-        <button
-          onClick={() => setActiveChannel('meta')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition ${
-            activeChannel === 'meta'
-              ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-              : 'text-slate-400 hover:text-white bg-white/[0.02]'
-          }`}
-        >
-          <Share2 size={16} /> Instagram & Facebook Meta
-          {metaConnected && <span className="w-2 h-2 rounded-full bg-blue-400" />}
-        </button>
-
-        <button
-          onClick={() => setActiveChannel('shipping')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition ${
-            activeChannel === 'shipping'
-              ? 'bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-              : 'text-slate-400 hover:text-white bg-white/[0.02]'
-          }`}
-        >
-          <Truck size={16} /> بوالص الشحن (Bosta & Aramex)
-        </button>
+      {/* Main Header */}
+      <div className="max-w-5xl mx-auto mb-8 text-center space-y-2">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+          ربط قنوات متجرك بنفسك في دقيقة واحدة 🚀
+        </h1>
+        <p className="text-xs sm:text-sm text-gray-400 max-w-xl mx-auto">
+          اربط حساب الواتساب وإنستجرام وشركة الشحن الخاصة بمتجرك بضغطة زر دون الحاجة لأي مبرمج أو إعدادات معقدة.
+        </p>
       </div>
 
-      {/* Tab 1: WhatsApp Connect */}
-      {activeChannel === 'whatsapp' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="rounded-2xl bg-white/[0.02] border border-white/5 p-6 backdrop-blur-xl">
-            <h3 className="text-base font-bold text-slate-100 pb-3 border-b border-white/5 flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <QrCode size={18} className="text-emerald-400" /> مسح رمز الـ QR لتوصيل واتساب
-              </span>
-              <button
-                onClick={fetchWhatsAppQR}
-                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-normal"
-              >
-                <RefreshCw size={12} className={isQrLoading ? 'animate-spin' : ''} /> تحديث الرمز
-              </button>
-            </h3>
+      {/* Channel Switcher Tabs */}
+      <div className="max-w-5xl mx-auto mb-8">
+        <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-[#110c22] border border-white/5 max-w-xl mx-auto">
+          <button
+            onClick={() => {
+              setActiveChannel('whatsapp');
+              soundFX.playPop();
+            }}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              activeChannel === 'whatsapp'
+                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/25'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Smartphone size={16} />
+            <span>واتساب (WhatsApp)</span>
+            {waConnected && <Check size={14} className="text-black stroke-[3]" />}
+          </button>
 
-            {!waConnected ? (
-              <div className="mt-6 flex flex-col items-center justify-center p-6 rounded-2xl bg-black/40 border border-white/5 text-center">
-                {isQrLoading || !qrCodeUrl ? (
-                  <div className="w-[280px] h-[280px] flex flex-col items-center justify-center text-slate-500">
-                    <RefreshCw size={28} className="animate-spin mb-2" />
-                    جاري توليد جلسة اتصال آمنة...
-                  </div>
-                ) : (
-                  <div className="p-3 bg-white rounded-2xl shadow-2xl">
-                    <img src={qrCodeUrl} alt="WhatsApp QR Code" className="w-[260px] h-[260px]" />
-                  </div>
-                )}
+          <button
+            onClick={() => {
+              setActiveChannel('meta');
+              soundFX.playPop();
+            }}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              activeChannel === 'meta'
+                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Share2 size={16} />
+            <span>إنستجرام وفيسبوك</span>
+            {metaConnected && <Check size={14} className="text-emerald-400 stroke-[3]" />}
+          </button>
 
-                <div className="mt-4 space-y-1">
-                  <p className="text-xs text-slate-300">افتح واتساب على هاتفك ← الأجهزة المرتبطة ← ربط جهاز</p>
-                  <p className="text-[11px] font-mono text-emerald-400">كود الإقران السريع: {pairingCode || '942-881'}</p>
-                </div>
+          <button
+            onClick={() => {
+              setActiveChannel('shipping');
+              soundFX.playPop();
+            }}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              activeChannel === 'shipping'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Truck size={16} />
+            <span>شركات الشحن</span>
+          </button>
+        </div>
+      </div>
 
+      {/* Content Container */}
+      <div className="max-w-4xl mx-auto">
+
+        {/* 1. WHATSAPP CONNECTION (Zero Friction QR or Pairing Code) */}
+        {activeChannel === 'whatsapp' && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#110c22] border border-emerald-500/30 shadow-2xl space-y-6 animate-fade-in">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
+              <div>
+                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">خطوة واحدة سهلة جداً</span>
+                <h2 className="text-xl font-bold text-white mt-0.5">مسح رمز الـ QR أو كود الهاتف</h2>
+              </div>
+
+              {/* Toggle Mode: QR Code or Pairing Code */}
+              <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/5 text-xs">
                 <button
-                  onClick={handleSimulateScan}
-                  className="mt-6 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2"
+                  onClick={() => setUsePairingCodeMode(false)}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    !usePairingCodeMode ? 'bg-emerald-500 text-black font-bold' : 'text-gray-400'
+                  }`}
                 >
-                  <Check size={14} /> تأكيد الربط (Pairing Test)
+                  مسح QR (كاميرا الموبايل)
+                </button>
+                <button
+                  onClick={() => setUsePairingCodeMode(true)}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    usePairingCodeMode ? 'bg-emerald-500 text-black font-bold' : 'text-gray-400'
+                  }`}
+                >
+                  كود اقتران (بدون كاميرا)
                 </button>
               </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-6 p-8 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-center space-y-4"
-              >
-                <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            </div>
+
+            {waConnected ? (
+              <div className="p-8 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mx-auto text-emerald-400">
                   <CheckCircle2 size={32} />
                 </div>
-                <div>
-                  <h4 className="text-base font-bold text-slate-100">رقم الواتساب متصل ويعمل حياً!</h4>
-                  <p className="text-xs text-slate-400 mt-1 font-mono" dir="ltr">{connectedNumber}</p>
+                <h3 className="text-lg font-bold text-white">الواتساب متصل ويعمل بنجاح! 🟢</h3>
+                <p className="text-xs text-gray-300">
+                  الرقم المتصل: <strong className="text-emerald-400 font-mono">{connectedNumber || '+20 101 234 5678'}</strong>
+                </p>
+                <div className="pt-2 flex justify-center gap-3">
+                  <Link
+                    href="/inbox"
+                    className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs transition-all shadow-lg shadow-emerald-500/20"
+                  >
+                    فتح صندوق الرسائل
+                  </Link>
+                  <button
+                    onClick={() => setWaConnected(false)}
+                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 text-xs transition"
+                  >
+                    قطع الاتصال وتغيير الرقم
+                  </button>
                 </div>
-                <div className="text-[11px] text-emerald-400 bg-emerald-500/10 py-1.5 px-3 rounded-lg border border-emerald-500/20 max-w-sm mx-auto">
-                  الوكلاء الذكية تستمع الآن لرسائل العملاء وترد في أقل من ثانيتين.
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-12 gap-8 items-center">
+                
+                {/* Visual Connector / QR Frame */}
+                <div className="md:col-span-5 flex flex-col items-center justify-center p-6 rounded-2xl bg-black/50 border border-white/10">
+                  {!usePairingCodeMode ? (
+                    <>
+                      <div className="w-56 h-56 bg-white p-3 rounded-2xl flex items-center justify-center shadow-xl relative overflow-hidden">
+                        {isQrLoading ? (
+                          <RefreshCw size={28} className="animate-spin text-purple-600" />
+                        ) : qrCodeUrl ? (
+                          <img src={qrCodeUrl} alt="WhatsApp QR Code" className="w-full h-full object-contain" />
+                        ) : (
+                          <QrCode size={120} className="text-black opacity-80" />
+                        )}
+                      </div>
+                      <div className="mt-3 flex items-center gap-2">
+                        <button
+                          onClick={fetchWhatsAppQR}
+                          className="text-[11px] text-gray-400 hover:text-white flex items-center gap-1"
+                        >
+                          <RefreshCw size={12} />
+                          <span>تحديث الرمز</span>
+                        </button>
+                        <span className="text-gray-600">·</span>
+                        <button
+                          onClick={handleSimulateScan}
+                          className="text-[11px] text-emerald-400 font-bold hover:underline"
+                        >
+                          تجربة تأكيد المسح الآن
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full space-y-4 text-center">
+                      <div className="p-4 rounded-xl bg-purple-950/30 border border-purple-500/30 space-y-1">
+                        <span className="text-[10px] text-gray-400 block">كود الاقتران السري:</span>
+                        <div className="text-2xl font-black font-mono text-emerald-400 tracking-widest">
+                          {pairingCode || '841-294'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => copyText(pairingCode || '841-294')}
+                        className="text-xs text-purple-300 hover:text-white flex items-center justify-center gap-1.5 mx-auto"
+                      >
+                        <Copy size={13} />
+                        <span>نسخ الكود</span>
+                      </button>
+                      <button
+                        onClick={handleSimulateScan}
+                        className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs transition"
+                      >
+                        تأكيد إدخال الكود في هاتفك
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => setWaConnected(false)}
-                  className="text-xs text-red-400 hover:underline pt-2"
-                >
-                  فصل الرقم وتوصيل رقم آخر
-                </button>
-              </motion.div>
+
+                {/* 3 Simple Steps */}
+                <div className="md:col-span-7 space-y-4 text-xs">
+                  <span className="text-gray-400 font-bold block mb-1">خطوات الربط من هاتفك (30 ثانية):</span>
+                  
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">1</span>
+                    <div>
+                      <strong className="text-white block">افتح تطبيق WhatsApp على هاتفك</strong>
+                      <span className="text-gray-400">اضغط على القائمة (الـ 3 نقاط) أو الإعدادات في الآيفون.</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">2</span>
+                    <div>
+                      <strong className="text-white block">اختر "الأجهزة المرتبطة" (Linked Devices)</strong>
+                      <span className="text-gray-400">ثم اضغط على زر "ربط جهاز" (Link a Device).</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">3</span>
+                    <div>
+                      <strong className="text-white block">وجّه كاميرا الهاتف نحو الشاشة</strong>
+                      <span className="text-gray-400">سيتم الاتصال فوراً ويبدأ الذكاء الاصطناعي في الرد على العملاء.</span>
+                    </div>
+                  </div>
+
+                  {/* Anti-Ban Guarantee Pill */}
+                  <div className="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center gap-2 text-emerald-300 text-[11px]">
+                    <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                    <span>الرقم محمي بدرع مكافحة الحظر (Anti-Ban Guard) ومحاكاة الكتابة الطبيعية.</span>
+                  </div>
+                </div>
+
+              </div>
             )}
           </div>
+        )}
 
-          <div className="space-y-6">
-            <GlowingSpotlightCard spotlightColor="rgba(16, 185, 129, 0.15)">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-2">
-                <ShieldCheck size={18} /> بروتوكول مكافحة الحظر (Anti-Ban Guard)
+        {/* 2. META (INSTAGRAM & MESSENGER) */}
+        {activeChannel === 'meta' && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#110c22] border border-purple-500/30 shadow-2xl space-y-6 animate-fade-in">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
+              <div>
+                <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider block">ربط فوري رسمي</span>
+                <h2 className="text-xl font-bold text-white mt-0.5">صفحات إنستجرام وفيسبوك (Comment to DM)</h2>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                المنصة مزودة بموزع إرسال ذكي (Adaptive Rate Limiter) يحاكي سرعة الكتابة الطبيعية للإنسان مع تأخير عشوائي بين 1.2 إلى 3.5 ثانية لحماية رقمك التجاري من أي تقييد.
-              </p>
-            </GlowingSpotlightCard>
-          </div>
-        </div>
-      )}
+            </div>
 
-      {/* Tab 2: Meta Instagram & Facebook */}
-      {activeChannel === 'meta' && (
-        <div className="max-w-2xl mx-auto rounded-2xl bg-white/[0.02] border border-white/5 p-8 backdrop-blur-xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center mx-auto shadow-2xl">
-            <Share2 size={32} className="text-white" />
-          </div>
-
-          <div>
-            <h3 className="text-lg font-bold text-slate-100">ربط صفحات فيسبوك وحسابات إنستاجرام بيزنس</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-              تفعيل الرد التلقائي على الرسائل الخاصة (Direct Messages) والردود اللحظية على تعليقات المنشورات والإعلانات.
-            </p>
-          </div>
-
-          {!metaConnected ? (
-            <button
-              onClick={handleConnectMeta}
-              disabled={metaConnecting}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 text-xs font-bold text-white transition shadow-[0_0_25px_rgba(59,130,246,0.3)] disabled:opacity-50 inline-flex items-center gap-2"
-            >
-              {metaConnecting ? <RefreshCw size={14} className="animate-spin" /> : <Share2 size={14} />}
-              {metaConnecting ? 'جاري الاتصال بـ Meta Graph API...' : 'تسجيل الدخول وربط الحسابات عبر Meta'}
-            </button>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-5 rounded-2xl bg-blue-950/20 border border-blue-500/30 text-right space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-blue-300">الصفحات المتصلة والمعتمدة:</span>
-                <span className="text-[10px] font-mono text-emerald-400">Live Synchronized</span>
-              </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
-                <div>
-                  <h5 className="text-xs font-bold text-slate-100">متجر الفاشون المصري (@pr_store_egypt)</h5>
-                  <p className="text-[11px] text-slate-400">Facebook Page & Instagram Direct</p>
+            {metaConnected ? (
+              <div className="p-8 rounded-2xl bg-purple-950/30 border border-purple-500/40 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-purple-500/20 border-2 border-purple-400 flex items-center justify-center mx-auto text-purple-400">
+                  <CheckCircle2 size={32} />
                 </div>
-                <CheckCircle2 size={18} className="text-emerald-400" />
+                <h3 className="text-lg font-bold text-white">تم الربط مع إنستجرام وفيسبوك بنجاح! 🟣</h3>
+                <p className="text-xs text-gray-300">
+                  الصفحة النشطة: <strong className="text-purple-300">@pr_store_egypt</strong> (مفعل الرد التلقائي على الكومنتات والرسائل)
+                </p>
+                <div className="pt-2 flex justify-center gap-3">
+                  <Link
+                    href="/comments"
+                    className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition"
+                  >
+                    إعدادات ردود الكومنتات
+                  </Link>
+                  <button
+                    onClick={() => setMetaConnected(false)}
+                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 text-xs transition"
+                  >
+                    فصل الحساب
+                  </button>
+                </div>
               </div>
-            </motion.div>
-          )}
-        </div>
-      )}
+            ) : (
+              <div className="space-y-6 max-w-xl mx-auto text-center py-4">
+                <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 p-[2px] mx-auto">
+                  <div className="w-full h-full rounded-3xl bg-[#0e091b] flex items-center justify-center gap-2">
+                    <span className="text-xl">📸</span>
+                    <span className="text-xl">💬</span>
+                  </div>
+                </div>
 
-      {/* Tab 3: Courier APIs */}
-      {activeChannel === 'shipping' && (
-        <div className="max-w-2xl mx-auto rounded-2xl bg-white/[0.02] border border-white/5 p-8 backdrop-blur-xl space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-white/5">
-            <Truck size={20} className="text-purple-400" />
-            <div>
-              <h3 className="text-base font-bold text-slate-100">مفاتيح الربط التلقائي لشركات الشحن (APIs)</h3>
-              <p className="text-xs text-slate-400">إدخال مفاتيح بوسطة وأرامكس لتصدير البوالص تلقائياً بعد تأكيد الطلب</p>
-            </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white">تسجيل الدخول بضغطة زر عبر Meta</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    اضغط على الزر بالأسفل لمنح PR Agent صلاحية الرد على رسائل الإنستجرام وتحويل تعليقات العملاء على البوستات والريلز إلى رسائل خاصة فوراً.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleConnectMeta}
+                  disabled={metaConnecting}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-sm transition-all shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {metaConnecting ? (
+                    <RefreshCw size={16} className="animate-spin text-white" />
+                  ) : (
+                    <Share2 size={16} />
+                  )}
+                  <span>ربط حساب إنستجرام وفيسبوك الآن</span>
+                </button>
+              </div>
+            )}
           </div>
+        )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs text-slate-300 block mb-1 font-medium">Bosta API Key (مفتاح بوسطة)</label>
-              <input
-                type="text"
-                value={bostaKey}
-                onChange={(e) => setBostaKey(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/50"
-              />
+        {/* 3. SHIPPING COURIER KEYS */}
+        {activeChannel === 'shipping' && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#110c22] border border-blue-500/30 shadow-2xl space-y-6 animate-fade-in">
+            <div className="border-b border-white/5 pb-4">
+              <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider block">بوالص الشحن التلقائية</span>
+              <h2 className="text-xl font-bold text-white mt-0.5">ربط شركات الشحن (بوسطة وأوتو وأرامكس)</h2>
+              <p className="text-xs text-gray-400 mt-1">أدخل مفتاح الـ API الخاص بحسابك في شركة الشحن ليتم إصدار البوليصة فور تأكيد الدفع.</p>
             </div>
 
-            <div>
-              <label className="text-xs text-slate-300 block mb-1 font-medium">Aramex Account Number / Entity</label>
-              <input
-                type="text"
-                value={aramexAccount}
-                onChange={(e) => setAramexAccount(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/50"
-              />
-            </div>
+            <form onSubmit={handleSaveShipping} className="space-y-4 max-w-xl mx-auto">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-300 block">مفتاح بوسطة (Bosta API Key)</label>
+                <input
+                  type="text"
+                  value={bostaKey}
+                  onChange={(e) => setBostaKey(e.target.value)}
+                  placeholder="bst_live_..."
+                  className="w-full h-11 rounded-xl bg-black/40 border border-white/10 px-4 text-xs font-mono text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
 
-            <div className="pt-2 flex items-center justify-between">
-              {shippingSaved ? (
-                <span className="text-xs text-emerald-400 flex items-center gap-1 font-bold">
-                  <Check size={14} /> تم حفظ المفاتيح وتفعيل التصدير التلقائي!
-                </span>
-              ) : <div />}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-300 block">رقم حساب أرامكس (Aramex Account No)</label>
+                <input
+                  type="text"
+                  value={aramexAccount}
+                  onChange={(e) => setAramexAccount(e.target.value)}
+                  placeholder="ARM-CAI-..."
+                  className="w-full h-11 rounded-xl bg-black/40 border border-white/10 px-4 text-xs font-mono text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
 
               <button
-                type="button"
-                onClick={() => {
-                  setShippingSaved(true);
-                  setTimeout(() => setShippingSaved(false), 3000);
-                }}
-                className="px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white transition shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                type="submit"
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2"
               >
-                حفظ الإعدادات
+                {shippingSaved ? <Check size={16} /> : <Key size={16} />}
+                <span>{shippingSaved ? 'تم الحفظ وتفعيل الربط!' : 'حفظ مفاتيح الشحن'}</span>
               </button>
-            </div>
+            </form>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </div>
   );
 }
