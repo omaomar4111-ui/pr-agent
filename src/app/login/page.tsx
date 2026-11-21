@@ -75,7 +75,7 @@ export default function LoginPage() {
 
     setIsLoading(true);
     setTimeout(() => {
-      window.location.href = '/dashboard';
+      window.location.href = '/onboarding';
     }, 600);
   };
 
