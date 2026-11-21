@@ -17,7 +17,8 @@ import {
   ChevronDown,
   Menu,
   X,
-  ExternalLink
+  ExternalLink,
+  QrCode
 } from "lucide-react";
 
 interface NavItem {
@@ -75,7 +76,13 @@ export function AppNavigation() {
       icon: <Bot size={16} />
     },
     {
-      label: "الإعدادات والقنوات",
+      label: "ربط القنوات (QR)",
+      href: "/channels",
+      icon: <QrCode size={16} />,
+      isNew: true
+    },
+    {
+      label: "الإعدادات",
       href: "/settings",
       icon: <Settings size={16} />
     }
