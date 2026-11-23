@@ -740,44 +740,62 @@ export default function SettingsPage() {
         {/* ======================================================== */}
         {activeTab === "billing" && (
           <div className="max-w-3xl space-y-6">
-            <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/10 space-y-6">
+            <div className="p-8 rounded-2xl bg-[#1a1b1e] border border-white/10 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold">الباقة الحالية (Subscription Tier)</h3>
-                  <p className="text-sm text-indigo-300 font-semibold mt-1">باقة النمو السريع (Growth Plan) — 1,450 ج.م / شهر</p>
+                  <h3 className="text-xl font-bold text-white">الباقة الحالية (Subscription Tier)</h3>
+                  <p className="text-sm text-[#8b5cf6] font-semibold mt-1">باقة النمو الذكي (Growth AI) — 690 ج.م / شهر</p>
                 </div>
-                <span className="px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                  مفعلة وتتجدد تلقائياً
+                <span className="px-3.5 py-1 rounded-full bg-[#d3fd50]/10 border border-[#d3fd50]/30 text-[#d3fd50] text-xs font-semibold">
+                  مفعلة — فترة تجربة مجانية (متبقي يومان)
                 </span>
               </div>
 
+              {/* Consumption Metrics: ManyChat Model & AI Credits */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10 text-center">
-                <div className="p-4 rounded-xl bg-black/40 border border-white/10">
-                  <span className="text-xs text-gray-400 block">استهلاك المحادثات</span>
-                  <span className="text-xl font-bold text-white mt-1 block">4,280 / 10,000</span>
+                <div className="p-4 rounded-xl bg-[#0f1011] border border-white/10">
+                  <span className="text-xs text-[#9ca3af] block">رصيد الـ AI Credits</span>
+                  <span className="text-xl font-bold text-[#d3fd50] mt-1 block">498 / 15,000</span>
+                  <span className="text-[10px] text-[#9ca3af] mt-1 block">الرد = 1 | فحص الإيصال = 2</span>
                 </div>
-                <div className="p-4 rounded-xl bg-black/40 border border-white/10">
-                  <span className="text-xs text-gray-400 block">الإيجنتس النشطين</span>
-                  <span className="text-xl font-bold text-emerald-400 mt-1 block">10 من 10</span>
+                <div className="p-4 rounded-xl bg-[#0f1011] border border-white/10">
+                  <span className="text-xs text-[#9ca3af] block">العملاء النشطون (Active Contacts)</span>
+                  <span className="text-xl font-bold text-white mt-1 block">142 / 3,000</span>
+                  <span className="text-[10px] text-[#9ca3af] mt-1 block">يُحسب مرة واحدة شهرياً</span>
                 </div>
-                <div className="p-4 rounded-xl bg-black/40 border border-white/10">
-                  <span className="text-xs text-gray-400 block">الفاتورة القادمة</span>
-                  <span className="text-xl font-bold text-indigo-400 mt-1 block">15 ديسمبر 2026</span>
+                <div className="p-4 rounded-xl bg-[#0f1011] border border-white/10">
+                  <span className="text-xs text-[#9ca3af] block">تاريخ التجديد القادم</span>
+                  <span className="text-xl font-bold text-[#8b5cf6] mt-1 block">26 نوفمبر 2026</span>
+                  <span className="text-[10px] text-[#9ca3af] mt-1 block">مهلة سماح 3 أيام</span>
                 </div>
+              </div>
+
+              {/* Extra Credit Pack Addon */}
+              <div className="p-4 rounded-xl bg-[#0f1011]/80 border border-[#8b5cf6]/20 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white">باقة شحن كريديت إضافية (AI Top-Up)</h4>
+                  <p className="text-[11px] text-[#9ca3af] mt-0.5">1,000 AI Credit إضافي بـ 50 ج.م فقط (دون الحاجة لتغيير الباقة)</p>
+                </div>
+                <button
+                  onClick={() => alert("طلب شحن 1,000 كريديت إضافي (50 ج.م) — سيتم تفعيل الدفع الإلكتروني الآن")}
+                  className="px-4 py-2 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs font-bold transition"
+                >
+                  شحن 1,000 كريديت (50 ج.م)
+                </button>
               </div>
 
               <div className="pt-2 flex items-center justify-between">
                 <Link
                   href="/pricing"
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold transition hover:opacity-90 shadow-lg shadow-indigo-600/20"
+                  className="px-6 py-2.5 rounded-xl bg-[#d3fd50] hover:bg-[#d3fd50]/90 text-black text-xs font-black transition shadow-lg shadow-[#d3fd50]/10"
                 >
                   ترقية أو تعديل الباقة
                 </Link>
                 <button
-                  onClick={() => alert("سيتم إرسال سجل الفواتير إلى بريدك الإلكتروني.")}
-                  className="text-xs text-gray-400 hover:text-white transition"
+                  onClick={() => alert("سيتم إرسال سجل الفواتير ورصيد الاستهلاك إلى بريدك الإلكتروني.")}
+                  className="text-xs text-[#9ca3af] hover:text-white transition"
                 >
-                  تحميل الفواتير السابقة (PDF)
+                  تحميل كشف الاستهلاك والفواتير (PDF)
                 </button>
               </div>
             </div>

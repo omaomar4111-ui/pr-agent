@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 import { AGENTS } from '@/data/agents';
 import { moderateMessage } from '@/lib/aiModerator';
+import { deductCredits, recordActiveContactInteraction } from '@/lib/creditLedger';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,12 +12,33 @@ export async function POST(req: NextRequest) {
       brief, 
       agentId: requestedAgentId, 
       conversationId,
-      modelPreference 
+      modelPreference,
+      tenantId = 'TENANT-DEFAULT',
+      customerId = 'CUSTOMER-ANON'
     } = await req.json();
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
+
+    // Phase 1: SaaS Foundation — Active Contacts Metering & AI Credit Check
+    const creditCheck = await deductCredits(
+      tenantId,
+      1, // 1 Credit per AI reply
+      'ai_reply',
+      `chat-${tenantId}-${conversationId || 'conv'}-${Date.now()}`
+    );
+
+    if (!creditCheck.success) {
+      return NextResponse.json({
+        reply: `⚠️ عذراً يا فندم: ${creditCheck.reason}. يرجى من التاجر تجديد الباقة أو شحن الكريديت للاستمرار في الرد الذكي.`,
+        error: 'INSUFFICIENT_CREDITS',
+        remainingCredits: creditCheck.remainingCredits
+      }, { status: 402 });
+    }
+
+    // Register active contact for this month
+    await recordActiveContactInteraction(tenantId, customerId);
 
     const cleanMsg = message.trim();
 

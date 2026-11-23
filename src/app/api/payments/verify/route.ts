@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseClient';
+import { deductCredits } from '@/lib/creditLedger';
 
 export interface PaymentVerificationResult {
   isValid: boolean;
@@ -13,6 +14,9 @@ export interface PaymentVerificationResult {
   tamperingFlags: string[];
   statusMessage: string;
 }
+
+// In-Memory store for duplicate references (Anti-Replay Fraud Lock)
+const verifiedReferencesGlobal = new Set<string>();
 
 export async function POST(req: NextRequest) {
   try {
@@ -120,20 +124,53 @@ export async function POST(req: NextRequest) {
       verification = getFallbackVerification(expectedAmount, clientWalletPhone);
     }
 
-    // 2. Persist in Supabase `payments` table
+    // 2. Multi-Tenant Ledger: Deduct 2 AI Credits for Vision OCR verification
     const { data: tenant } = await supabaseAdmin
       .from('tenants')
       .select('id')
       .eq('slug', tenantSlug)
       .maybeSingle();
 
-    const tenantId = tenant?.id || null;
+    const tenantId = tenant?.id || tenantSlug || 'default-tenant';
 
+    const creditDeduction = await deductCredits(
+      tenantId,
+      2, // Vision OCR verification costs 2 Credits
+      'vision_ocr_verify',
+      `ocr-${orderId || 'adhoc'}-${Date.now()}`
+    );
+
+    // 3. Anti-Replay Duplicate Reference Check (Fraud Protection)
+    const ref = verification.transactionReference;
+    let isDuplicate = false;
+
+    if (ref && verifiedReferencesGlobal.has(ref)) {
+      isDuplicate = true;
+    } else if (ref && supabaseAdmin) {
+      const { data: existingRef } = await supabaseAdmin
+        .from('payments')
+        .select('id')
+        .eq('extracted_reference', ref)
+        .maybeSingle();
+      if (existingRef) {
+        isDuplicate = true;
+      }
+    }
+
+    if (isDuplicate) {
+      verification.isValid = false;
+      verification.tamperingFlags.push('DUPLICATE_REFERENCE_DETECTED');
+      verification.statusMessage = 'احتيال محتمل: تم استخدام هذا الرقم المرجعي للتحويل في عملية سابقة!';
+    } else if (ref) {
+      verifiedReferencesGlobal.add(ref);
+    }
+
+    // 4. Persist in Supabase `payments` table
     const { data: savedPayment, error: paymentError } = await supabaseAdmin
       .from('payments')
       .insert({
         order_id: orderId || null,
-        tenant_id: tenantId,
+        tenant_id: tenant?.id || null,
         screenshot_url: 'uploaded_base64_processed',
         extracted_amount: verification.amount,
         extracted_reference: verification.transactionReference,
@@ -149,7 +186,7 @@ export async function POST(req: NextRequest) {
       console.error('[Supabase Payment Insert Error]:', paymentError);
     }
 
-    // 3. If valid and orderId provided, update order status to confirmed
+    // 5. If valid and orderId provided, update order status to confirmed
     let orderUpdated = false;
     if (orderId && verification.isValid) {
       const { error: updateOrderError } = await supabaseAdmin
@@ -171,7 +208,11 @@ export async function POST(req: NextRequest) {
       engine: '4_ARGON_SUPABASE_PERSISTENT_VISION',
       verification,
       payment: savedPayment,
-      order_updated: orderUpdated
+      order_updated: orderUpdated,
+      credits: {
+        remaining: creditDeduction.remainingCredits,
+        deducted: creditDeduction.deductedAmount
+      }
     });
 
   } catch (error: any) {
